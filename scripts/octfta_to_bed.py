@@ -18,7 +18,7 @@ group.add_argument("-bed", metavar='', help=('''
 .bed file to convert as OCTFTA output but with a supplementar column on the left for fragments.     
  '''))
 parser.add_argument("-o", default = '.', metavar='', help=('''
-output directory for the result file
+output directory for the result file.
 '''
 ))
 
@@ -27,6 +27,8 @@ args = parser.parse_args()
 octfta_file = args.octfta
 bed_file = args.bed
 out_dir = args.o
+if out_dir[-1] == "/":
+    out_dir = out_dir[:-1]
 
 if not os.path.exists(out_dir):
     os.makedirs(out_dir)
