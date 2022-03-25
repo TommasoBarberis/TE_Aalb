@@ -18,7 +18,7 @@ conda env export --from-history > TE_Aalb.yml
 
 To update it:
 ```
-conda env update --file local.yml --prune
+conda env update --file TE_Aalb.yml --prune
 ```
 
 ## Organization of the repository

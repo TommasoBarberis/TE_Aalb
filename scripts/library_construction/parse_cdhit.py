@@ -16,7 +16,7 @@ Dependancies:
     - Refiner 
 
 Tips:
-You can install dependencies using the .yml in the root directory of the project:
+You can install python dependencies using the .yml in the root directory of the project:
 conda env create -f TE_Aalb.yml
 And then make them available using:
 conda activate TE_Aalb
@@ -27,7 +27,6 @@ from Bio import SeqIO
 import subprocess, time
 import shutil, glob
 import multiprocessing as mp
-from tqdm import tqdm
 import plotly.express as px
 
 parser = argparse.ArgumentParser()
@@ -104,29 +103,20 @@ def refiner(cluster_file):
     """
     Call Refiner in a subprocess.
     """
-
     command = ['Refiner', cluster_file]
     subprocess.run(command)
 
 
-def update_progress_bar(_):
-    """
-    Callback for the parallelized tasks.
-    """
-    _.update()
-
-
-def do_work(ncpu):
+def do_work(ncpu, out_dir):
     """
     Recovers all fasta files for cluster present at the moment in the folder and call Refiner command using parallelization.
     """
 
-    tmp_clst = glob.glob('*.clst.fasta') # select all fasta files for each cluster present in the directory
+    tmp_clst = glob.glob(out_dir + '/*.clst.fasta') # select all fasta files for each cluster present in the directory
     
     pool = mp.Pool(ncpu)
-    progress_bar = tqdm(total=ncpu)
     for clst in tmp_clst:
-        pool.apply_async(refiner, (clst, ), callback=update_progress_bar(progress_bar))              
+        pool.apply_async(refiner, (clst, ))              
 
     pool.close()
     pool.join()
@@ -139,13 +129,12 @@ def update_and_clean(out_dir):
     """
     Add new consensi to consensi.fa and consensi.stk and clean temporary files.
     """
-    
     # output files
     consensi = out_dir + "/consensi.fa"
     stk = out_dir + "/consensi.stk"
 
     # add the sequence to consensi.fa
-    tmp_cons = glob.glob('*.refiner_cons')
+    tmp_cons = glob.glob(out_dir + '/*.refiner_cons')
 
     with open(consensi, "a") as f:
         for cons_fasta in tmp_cons:
@@ -155,7 +144,7 @@ def update_and_clean(out_dir):
             os.remove(cons_fasta)
                 
     # add the alignement to consensi.stk
-    tmp_stk = glob.glob('*.refiner.stk')
+    tmp_stk = glob.glob(out_dir '/*.refiner.stk')
 
     with open(stk, "a") as f:
         for cons_stk in tmp_stk:
@@ -164,7 +153,7 @@ def update_and_clean(out_dir):
                 f.write(data)
             os.remove(cons_stk)
 
-    tmp_RM = glob.glob('RM_*')
+    tmp_RM = glob.glob(out_dir + '/RM_*')
     for rm in tmp_RM:
         path = os.path.join(out_dir, rm)
         if os.path.isdir(path):
@@ -203,9 +192,7 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
 
     c = 0 # counter for naming consensus sequences
 
-    # main
-    # if not os.path.isfile(consensi): # if there isn't previously results TODO: uncomment this line and tab the following code block
-       
+    # main       
     nb_cluster_file = 0 # to count how many file generate for parallelization
 
     for seq_id in seqs_dict.keys():
@@ -214,10 +201,10 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
             nb_repr_within_copies += 1
 
             if len(cdhit_dict[seq_id]) == 0: # the cluster is singleton
-                if not os.path.isfile(singleton): #TODO: delete this line and untab the following block
-                    nb_singleton += 1                
-                    with open(singleton, "a") as f:
-                        f.write(">" + str(seq_id) + "\n" + str(seqs_dict[seq_id]) + "\n")
+                
+                nb_singleton += 1                
+                with open(singleton, "a") as f:
+                    f.write(">" + str(seq_id) + "\n" + str(seqs_dict[seq_id]) + "\n")
     
             else: # the cluster is not singleton
                 
@@ -237,9 +224,7 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
                     do_work(ncpu)
                     update_and_clean(out_dir)    
                     nb_cluster_file = 0                        
-                
-                if c == 3: #TODO: remove this block
-                    break
+
                 c += 1
 
     if nb_cluster_file != 0:
@@ -256,7 +241,6 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
         """)
     
     # plot_dist(cdhit_dict, out_dir)
-
 
 
 
