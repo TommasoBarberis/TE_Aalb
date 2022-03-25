@@ -1,5 +1,6 @@
 # Transposable elements of _Aedes albopictus_
 
+## Managing the conda environment
 To install the conda env:
 ```
 conda env create -f TE_Aalb.yml
@@ -10,8 +11,18 @@ To activate it:
 conda activate TE_Aalb
 ```
 
-## Update the conda environment
+Create a new `.yml` file:
+```
+conda env export --from-history > TE_Aalb.yml
+```
 
+To update it:
 ```
-conda env export > TE_Aalb.yml
+conda env update --file local.yml --prune
 ```
+
+## Organization of the repository
+
+- `misc/`: old scripts and other stuff;
+- `notebooks/`: jupyter notebooks and related scripts;
+- `scripts/`: scripts used to produce results. 
