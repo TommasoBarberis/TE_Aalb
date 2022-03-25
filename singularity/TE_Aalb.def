@@ -1,0 +1,17 @@
+Bootstrap: debootstrap
+OSVersion: focal
+MirrorURL:  http://us.archive.ubuntu.com/ubuntu/
+Stage: build
+
+%environment
+
+%post
+    apt-get update && apt-get install -y git
+    cd /opt
+    git clone https://github.com/TommasoBarberis/TE_Aalb.git
+
+%help
+This container is used to perform TE (transposable elements) insertion calling
+in the Aedes albopictus's 1000 genomes project.
+To process a sequenced genome run:
+TODO
