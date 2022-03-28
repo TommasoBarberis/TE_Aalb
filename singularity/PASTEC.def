@@ -1,0 +1,19 @@
+Bootstrap: debootstrap
+OSVersion: focal
+MirrorURL:  http://us.archive.ubuntu.com/ubuntu/
+Stage: build
+
+%environment
+
+%post
+    apt-get update && apt-get install -y wget
+    
+    ## 
+    cd /opt
+    wget https://urgi.versailles.inrae.fr/download/repet/PASTEC_linux-x64-2.0.tar.gz
+    tar -xvf https://urgi.versailles.inrae.fr/download/repet/PASTEC_linux-x64-2.0.tar.gz && rm PASTEC_linux-x64-2.0.tar.gz
+    PATH=/opt/PASTEC_linux-x64-2.0/bin:$PATH
+
+    ## Installing dependancies of PASTEC
+    apt-get install -y python3 mysql-server
+    

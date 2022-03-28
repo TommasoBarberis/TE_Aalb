@@ -144,7 +144,7 @@ def update_and_clean(out_dir):
             os.remove(cons_fasta)
                 
     # add the alignement to consensi.stk
-    tmp_stk = glob.glob(out_dir '/*.refiner.stk')
+    tmp_stk = glob.glob(out_dir + '/*.refiner.stk')
 
     with open(stk, "a") as f:
         for cons_stk in tmp_stk:

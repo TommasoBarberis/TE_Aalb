@@ -84,7 +84,7 @@ python3 $SCRIPTS/octfta_to_bed.py -octfta final.full.tsv
 
 # recover sequences from full copies
 echo -e "## Recovering sequences of copies in a FASTA file"
-bedtools getfasta -fi $GENOME -bed final.full.bed > copies.fasta
+bedtools getfasta -fi $GENOME -bed final.full.bed -name > copies.fasta
 
 ## Computing time
 end_time=$(date +%s)

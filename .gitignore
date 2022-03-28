@@ -3,3 +3,5 @@ data/
 __pycache__/
 test/
 singularity/TE_Aalb.sif
+singularity/PASTEC.sif
+singularity/PASTEC_dev/
