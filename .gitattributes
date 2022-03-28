@@ -2,4 +2,4 @@
 *.py linguist-detectable=true
 *.ipynb linguist-detectable=false
 *.html linguist-detectable=false
-Singularity.* linguist-language=Singularity
+*.def linguist-language=Singularity
