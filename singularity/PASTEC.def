@@ -3,17 +3,148 @@ OSVersion: focal
 MirrorURL:  http://us.archive.ubuntu.com/ubuntu/
 Stage: build
 
+%labels
+    AUTHOR Tommaso Barberis tommasobarberis98@gmail.com
+    VERSION  v1.0
+
 %environment
 
 %post
-    apt-get update && apt-get install -y wget
+    apt-get update && apt-get install -y wget=1.20.3-1ubuntu1 apt-utils=2.0.2
     
-    ## 
+    ## Download PASTEC
     cd /opt
     wget https://urgi.versailles.inrae.fr/download/repet/PASTEC_linux-x64-2.0.tar.gz
-    tar -xvf https://urgi.versailles.inrae.fr/download/repet/PASTEC_linux-x64-2.0.tar.gz && rm PASTEC_linux-x64-2.0.tar.gz
-    PATH=/opt/PASTEC_linux-x64-2.0/bin:$PATH
+    tar -xvf PASTEC_linux-x64-2.0.tar.gz
 
     ## Installing dependancies of PASTEC
-    apt-get install -y python3 mysql-server
+    apt-get install -y python3=3.8.2-0ubuntu2 \
+        python3-distutils=3.8.2-1ubuntu1 \
+        python3-apt=2.0.0 \
+        build-essential=12.8ubuntu1 \
+        python-dev-is-python3=3.8.2-4 \
+        default-libmysqlclient-dev=1.0.5ubuntu2
     
+    ### Installin pip
+    cd /opt
+    wget https://bootstrap.pypa.io/get-pip.py
+    python3 get-pip.py
+
+    ### Installing Python modules
+    pip3 install PyYAML==6.0
+    pip3 install mysqlclient==2.1.0
+
+    ### Installing MySQL, credits: https://serverfault.com/a/783528
+    export DEBIAN_FRONTEND=noninteractive
+
+    MYSQL_ROOT_PASSWORD="my_secret_password"
+
+    echo debconf mysql-server/root_password password $MYSQL_ROOT_PASSWORD | debconf-set-selections
+    echo debconf mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD | debconf-set-selections
+    apt-get -qq install mysql-server=8.0.19-0ubuntu5 > /dev/null
+
+    ### Install Expect and dependancies
+    cd /opt
+    wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/e/expect/tcl-expect_5.45.4-2build1_amd64.deb
+    wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/e/expect/expect_5.45.4-2build1_amd64.deb
+    wget http://security.ubuntu.com/ubuntu/pool/main/t/tzdata/tzdata_2022a-0ubuntu0.20.04_all.deb
+    wget http://cz.archive.ubuntu.com/ubuntu/pool/main/t/tcl8.6/libtcl8.6_8.6.10+dfsg-1_amd64.deb
+    wget http://cz.archive.ubuntu.com/ubuntu/pool/main/t/tcl8.6/tcl8.6_8.6.10+dfsg-1_amd64.deb
+
+    dpkg -i tzdata_2022a-0ubuntu0.20.04_all.deb
+    dpkg -i libtcl8.6_8.6.10+dfsg-1_amd64.deb
+    dpkg -i tcl8.6_8.6.10+dfsg-1_amd64.deb
+    dpkg -i tcl-expect_5.45.4-2build1_amd64.deb
+    dpkg -i expect_5.45.4-2build1_amd64.deb
+
+        # Build Expect script
+    tee ~/secure_our_mysql.sh > /dev/null << EOF
+    spawn $(which mysql_secure_installation)
+
+    expect "Enter password for user root:"
+    send "$MYSQL_ROOT_PASSWORD\r"
+
+    expect "Press y|Y for Yes, any other key for No:"
+    send "y\r"
+
+    expect "Please enter 0 = LOW, 1 = MEDIUM and 2 = STRONG:"
+    send "2\r"
+
+    expect "Change the password for root ? ((Press y|Y for Yes, any other key for No) :"
+    send "n\r"
+
+    expect "Remove anonymous users? (Press y|Y for Yes, any other key for No) :"
+    send "y\r"
+
+    expect "Disallow root login remotely? (Press y|Y for Yes, any other key for No) :"
+    send "y\r"
+
+    expect "Remove test database and access to it? (Press y|Y for Yes, any other key for No) :"
+    send "y\r"
+
+    expect "Reload privilege tables now? (Press y|Y for Yes, any other key for No) :"
+    send "y\r"
+
+    EOF
+
+        # Run Expect script, this runs the "mysql_secure_installation" script which removes insecure defaults.
+    expect ~/secure_our_mysql.sh
+
+        # Cleanup
+    rm -v ~/secure_our_mysql.sh 
+
+    echo "MySQL setup completed. Insecure defaults are gone. Please remove this script manually when you are done with it (or at least remove the MySQL root password that you put inside it."
+
+    service mysql stop
+    usermod -d /var/lib/mysql/ mysql
+    service mysql start
+
+    mysql -uroot -p -e 'USE mysql; UPDATE `user` SET `Host`="%" WHERE `User`="root" AND `Host`="localhost"; DELETE FROM `user` WHERE `Host` != "%" AND `User`="root"; FLUSH PRIVILEGES;'
+    service mysql restart
+
+
+    ## Installing optional dependencies for PASTEC
+
+    ### Installing BLAST+
+    cd /opt
+    wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.13.0/ncbi-blast-2.13.0+-x64-linux.tar.gz
+    tar -xvf ncbi-blast-2.13.0+-x64-linux.tar.gz
+
+    ### Installing HMMER3
+    wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/libd/libdivsufsort/libdivsufsort3_2.0.1-4_amd64.deb
+    wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/h/hmmer/hmmer_3.3+dfsg2-1_amd64.deb
+    
+    dpkg -i libdivsufsort3_2.0.1-4_amd64.deb
+    dpkg -i hmmer_3.3+dfsg2-1_amd64.deb
+
+    ### Installing TRF
+    cd /opt
+    wget https://github.com/Benson-Genomics-Lab/TRF/releases/download/v4.09.1/trf409.linux64
+    chmod +x trf409.linux64
+
+    ## Downloading Pfam
+    cd ~
+    wget https://urgi.versailles.inra.fr/download/repet/profiles/ProfilesBankForREPET_Pfam27.0_GypsyDB.hmm.tar.gz
+
+    ## Setup PASTEC
+    mkdir -p /mnt/PASTEC_output
+    sed 's/repet_host: <your_MySQL_host>/repet_host: mysql/g' /opt/PASTEC_linux-x64-2.0/config/PASTEClassifier.cfg \
+    sed 's/repet_user: <your_MySQL_login>/repet_user: root/g' | \
+    sed "s/repet_pw: <your_MySQL_password>/repet_pw: $MYSQL_ROOT_PASSWORD/g" | \
+    sed 's/repet_db: <your_MySQL_db>/repet_db: mysql/g' | \
+    sed 's/project_name: <your_project_name>/project_name: TE_classification/g' | \
+    sed 's/project_dir: <absolute_path_to_your_project_directory>/project_dir: /mnt/PASTEC_output/g' | \
+    sed 's/blast: ncbi/blast: ncbiplus/g' | \
+    > tmp && cat tmp > /opt/PASTEC_linux-x64-2.0/config/PASTEClassifier.cfg && rm tmp
+
+    ## Clean
+    cd /opt
+    rm *tar.gz *.deb
+
+%environment
+    export PATH=/opt/PASTEC_linux-x64-2.0/bin:$PATH
+    export PATH=/opt/ncbi-blast-2.13.0+/bin:$PATH
+    export PATH=/opt/:$PATH
+
+%help
+Singularity container for PASTEC from the REPET package.

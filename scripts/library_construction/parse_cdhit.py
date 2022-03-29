@@ -103,7 +103,7 @@ def refiner(cluster_file):
     """
     Call Refiner in a subprocess.
     """
-    command = ['Refiner', cluster_file]
+    command = ['Refiner', cluster_file] 
     subprocess.run(command)
 
 
@@ -192,7 +192,8 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
 
     c = 0 # counter for naming consensus sequences
 
-    # main       
+    # main   
+    subprocess.run(["cd", out_dir])    
     nb_cluster_file = 0 # to count how many file generate for parallelization
 
     for seq_id in seqs_dict.keys():
