@@ -26,6 +26,8 @@ dpkg -i tcl8.6_8.6.10+dfsg-1_amd64.deb
 dpkg -i tcl-expect_5.45.4-2build1_amd64.deb
 dpkg -i expect_5.45.4-2build1_amd64.deb
 
+sudo service mysql start
+
     # Build Expect script
 tee ~/secure_our_mysql.sh > /dev/null << EOF
 spawn $(which mysql_secure_installation)
@@ -61,5 +63,12 @@ expect ~/secure_our_mysql.sh
 
 # Cleanup
 rm -v ~/secure_our_mysql.sh 
+
+apt-get install -y \
+    mysql-client=8.0.19-0ubuntu5
+    libmysqlclient-dev=8.0.19-0ubuntu5 \
+
+
+export PATH=$PATH:usr/bin/mysql
 
 echo "MySQL setup completed. Insecure defaults are gone. Please remove this script manually when you are done with it (or at least remove the MySQL root password that you put inside it."
