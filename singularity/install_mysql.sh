@@ -5,7 +5,12 @@ MYSQL_ROOT_PASSWORD="my_secret_password"
 
 echo debconf mysql-server/root_password password $MYSQL_ROOT_PASSWORD | debconf-set-selections
 echo debconf mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD | debconf-set-selections
-apt-get -qq install mysql-server=8.0.19-0ubuntu5 > /dev/null
+
+### Install mysql-server
+cd /opt
+wget http://repo.mysql.com/mysql-apt-config_0.8.15-1_all.deb
+dpkg -i mysql-apt-config_0.8.15-1_all.deb
+apt install mysql-server
 
 ### Install Expect and dependancies
 cd /opt
@@ -51,10 +56,10 @@ send "y\r"
 
 EOF
 
-    # Run Expect script, this runs the "mysql_secure_installation" script which removes insecure defaults.
+# Run Expect script, this runs the "mysql_secure_installation" script which removes insecure defaults.
 expect ~/secure_our_mysql.sh
 
-    # Cleanup
+# Cleanup
 rm -v ~/secure_our_mysql.sh 
 
 echo "MySQL setup completed. Insecure defaults are gone. Please remove this script manually when you are done with it (or at least remove the MySQL root password that you put inside it."

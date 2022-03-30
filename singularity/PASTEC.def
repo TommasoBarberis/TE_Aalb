@@ -10,97 +10,73 @@ Stage: build
 %environment
 
 %post
-    apt-get update && apt-get install -y wget=1.20.3-1ubuntu1 apt-utils=2.0.2
+    apt-get update && apt-get install -y \
+        wget=1.20.3-1ubuntu1 \
+        apt-utils=2.0.2 \
+        git=1:2.25.1-1ubuntu3
     
     ## Download PASTEC
     cd /opt
     wget https://urgi.versailles.inrae.fr/download/repet/PASTEC_linux-x64-2.0.tar.gz
     tar -xvf PASTEC_linux-x64-2.0.tar.gz
 
+    ## Fix on PASTEC modules
+    for pkg in $(ls -d /opt/PASTEC_linux-x64-2.0/*/); do
+        for module in $(ls -1 $pkg/*py); do
+            sed 's/from commons./from /g' $module > tmp && cat tmp > $module && rm tmp
+            sed 's/from PASTEC./from /g' $module > tmp && cat tmp > $module && rm tmp
+        done
+    done 2> /dev/null
+    # sed 's/except (BadOptionError, OptionValueError), err:/except (BadOptionError, OptionValueError):/g' /opt/PASTEC_linux-x64-2.0/commons/core/utils/RepetOptionParser.py > tmp && cat tmp > /opt/PASTEC_linux-x64-2.0/commons/core/utils/RepetOptionParser.py && rm tmp
+    # sed 's/print "WARNING: unknown symbol '%s', replacing it by N" % (self.sequence[i])/print("WARNING: unknown symbol '%s', replacing it by N" % (self.sequence[i]))/g' /opt/PASTEC_linux-x64-2.0/commons/core/seq/Bioseq.py > tmp && cat tmp > /opt/PASTEC_linux-x64-2.0/commons/core/seq/Bioseq.py && rm tmp
+
     ## Installing dependancies of PASTEC
-    apt-get install -y python3=3.8.2-0ubuntu2 \
-        python3-distutils=3.8.2-1ubuntu1 \
-        python3-apt=2.0.0 \
-        build-essential=12.8ubuntu1 \
-        python-dev-is-python3=3.8.2-4 \
-        default-libmysqlclient-dev=1.0.5ubuntu2
+    # apt-get install -y \
+        # python2
+    #     python3=3.8.2-0ubuntu2 \
+    #     python3-distutils=3.8.2-1ubuntu1 \
+    #     python3-apt=2.0.0 \
+    #     build-essential=12.8ubuntu1 \
+    #     python-dev-is-python3=3.8.2-4 \
+    #     default-libmysqlclient-dev=1.0.5ubuntu2
     
-    ### Installin pip
+    # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7-minimal_2.7.18-1~20.04.1_amd64.deb
+    # wget http://cz.archive.ubuntu.com/ubuntu/pool/main/m/mime-support/mime-support_3.64ubuntu1_all.deb
+    # wget http://cz.archive.ubuntu.com/ubuntu/pool/main/r/readline/readline-common_8.0-4_all.deb
+    # wget http://cz.archive.ubuntu.com/ubuntu/pool/main/r/readline/libreadline8_8.0-4_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7-stdlib_2.7.18-1~20.04.1_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/python2.7-minimal_2.7.18-1~20.04.1_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/python2.7_2.7.18-1~20.04.1_amd64.deb
+
+    # dpkg -i libpython2.7-minimal_2.7.18-1~20.04.1_amd64.deb
+    # dpkg -i mime-support_3.64ubuntu1_all.deb
+    # dpkg -i readline-common_8.0-4_all.deb
+    # dpkg -i libreadline8_8.0-4_amd64.deb
+    # dpkg -i libpython2.7-stdlib_2.7.18-1~20.04.1_amd64.deb
+    # dpkg -i python2.7-minimal_2.7.18-1~20.04.1_amd64.deb
+    # dpkg -i python2.7_2.7.18-1~20.04.1_amd64.deb
+    
+    # ### Installin pip
+    # cd /opt
+    # wget https://bootstrap.pypa.io/get-pip.py
+    # python3 get-pip.py
+
+    # ### Installing Python modules
+    # pip3 install PyYAML==6.0
+    # pip3 install mysqlclient==2.1.0
+
+    ### Installing mysql
     cd /opt
-    wget https://bootstrap.pypa.io/get-pip.py
-    python3 get-pip.py
+    git clone https://github.com/TommasoBarberis/TE_Aalb.git
+    cd TE_Aalb/singularity
+    bash install_mysql.sh
 
-    ### Installing Python modules
-    pip3 install PyYAML==6.0
-    pip3 install mysqlclient==2.1.0
+    # service mysql stop
+    # usermod -d /var/lib/mysql/ mysql
+    # service mysql start
 
-    ### Installing MySQL, credits: https://serverfault.com/a/783528
-    export DEBIAN_FRONTEND=noninteractive
-
-    MYSQL_ROOT_PASSWORD="my_secret_password"
-
-    echo debconf mysql-server/root_password password $MYSQL_ROOT_PASSWORD | debconf-set-selections
-    echo debconf mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD | debconf-set-selections
-    apt-get -qq install mysql-server=8.0.19-0ubuntu5 > /dev/null
-
-    ### Install Expect and dependancies
-    cd /opt
-    wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/e/expect/tcl-expect_5.45.4-2build1_amd64.deb
-    wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/e/expect/expect_5.45.4-2build1_amd64.deb
-    wget http://security.ubuntu.com/ubuntu/pool/main/t/tzdata/tzdata_2022a-0ubuntu0.20.04_all.deb
-    wget http://cz.archive.ubuntu.com/ubuntu/pool/main/t/tcl8.6/libtcl8.6_8.6.10+dfsg-1_amd64.deb
-    wget http://cz.archive.ubuntu.com/ubuntu/pool/main/t/tcl8.6/tcl8.6_8.6.10+dfsg-1_amd64.deb
-
-    dpkg -i tzdata_2022a-0ubuntu0.20.04_all.deb
-    dpkg -i libtcl8.6_8.6.10+dfsg-1_amd64.deb
-    dpkg -i tcl8.6_8.6.10+dfsg-1_amd64.deb
-    dpkg -i tcl-expect_5.45.4-2build1_amd64.deb
-    dpkg -i expect_5.45.4-2build1_amd64.deb
-
-        # Build Expect script
-    tee ~/secure_our_mysql.sh > /dev/null << EOF
-    spawn $(which mysql_secure_installation)
-
-    expect "Enter password for user root:"
-    send "$MYSQL_ROOT_PASSWORD\r"
-
-    expect "Press y|Y for Yes, any other key for No:"
-    send "y\r"
-
-    expect "Please enter 0 = LOW, 1 = MEDIUM and 2 = STRONG:"
-    send "2\r"
-
-    expect "Change the password for root ? ((Press y|Y for Yes, any other key for No) :"
-    send "n\r"
-
-    expect "Remove anonymous users? (Press y|Y for Yes, any other key for No) :"
-    send "y\r"
-
-    expect "Disallow root login remotely? (Press y|Y for Yes, any other key for No) :"
-    send "y\r"
-
-    expect "Remove test database and access to it? (Press y|Y for Yes, any other key for No) :"
-    send "y\r"
-
-    expect "Reload privilege tables now? (Press y|Y for Yes, any other key for No) :"
-    send "y\r"
-
-    EOF
-
-        # Run Expect script, this runs the "mysql_secure_installation" script which removes insecure defaults.
-    expect ~/secure_our_mysql.sh
-
-        # Cleanup
-    rm -v ~/secure_our_mysql.sh 
-
-    echo "MySQL setup completed. Insecure defaults are gone. Please remove this script manually when you are done with it (or at least remove the MySQL root password that you put inside it."
-
-    service mysql stop
-    usermod -d /var/lib/mysql/ mysql
-    service mysql start
-
-    mysql -uroot -p -e 'USE mysql; UPDATE `user` SET `Host`="%" WHERE `User`="root" AND `Host`="localhost"; DELETE FROM `user` WHERE `Host` != "%" AND `User`="root"; FLUSH PRIVILEGES;'
-    service mysql restart
+    # mysql -uroot -p -e 'USE mysql; UPDATE `user` SET `Host`="%" WHERE `User`="root" AND `Host`="localhost"; DELETE FROM `user` WHERE `Host` != "%" AND `User`="root"; FLUSH PRIVILEGES;'
+    # service mysql restart
 
 
     ## Installing optional dependencies for PASTEC
@@ -124,17 +100,19 @@ Stage: build
 
     ## Downloading Pfam
     cd ~
-    wget https://urgi.versailles.inra.fr/download/repet/profiles/ProfilesBankForREPET_Pfam27.0_GypsyDB.hmm.tar.gz
+    wget https://urgi.versailles.inra.fr/download/repet/profiles/ProfilesBankForREPET_Pfam32.0.hmm.tar.gz
+    tar -xvf ProfilesBankForREPET_Pfam32.0.hmm.tar.gz
 
     ## Setup PASTEC
     mkdir -p /mnt/PASTEC_output
-    sed 's/repet_host: <your_MySQL_host>/repet_host: mysql/g' /opt/PASTEC_linux-x64-2.0/config/PASTEClassifier.cfg \
+    sed 's/repet_host: <your_MySQL_host>/repet_host: mysql/g' /opt/PASTEC_linux-x64-2.0/config/PASTEClassifier.cfg | \
     sed 's/repet_user: <your_MySQL_login>/repet_user: root/g' | \
     sed "s/repet_pw: <your_MySQL_password>/repet_pw: $MYSQL_ROOT_PASSWORD/g" | \
     sed 's/repet_db: <your_MySQL_db>/repet_db: mysql/g' | \
     sed 's/project_name: <your_project_name>/project_name: TE_classification/g' | \
-    sed 's/project_dir: <absolute_path_to_your_project_directory>/project_dir: /mnt/PASTEC_output/g' | \
+    sed 's/project_dir: <absolute_path_to_your_project_directory>/project_dir: \/mnt\/PASTEC_output/g' | \
     sed 's/blast: ncbi/blast: ncbiplus/g' | \
+    sed "s/TE_HMM_profiles: <bank_of_HMM_profiles>/TE_HMM_profiles: $HOME\/ProfilesBankForREPET_Pfam32.0.hmm/g" | \
     > tmp && cat tmp > /opt/PASTEC_linux-x64-2.0/config/PASTEClassifier.cfg && rm tmp
 
     ## Clean
@@ -145,6 +123,14 @@ Stage: build
     export PATH=/opt/PASTEC_linux-x64-2.0/bin:$PATH
     export PATH=/opt/ncbi-blast-2.13.0+/bin:$PATH
     export PATH=/opt/:$PATH
+    export REPET_PATH=/opt/PASTEC_linux-x64-2.0
+    export PYTHONPATH=/opt/PASTEC_linux-x64-2.0/PASTEC:/opt/PASTEC_linux-x64-2.0/commons
+
+%runscript
+## Parsing parameters
+# script wtih PASTEC command
+# path to nucl lib
+bash /opt/TE_Aalb/singularity/parse_param.sh $*
 
 %help
 Singularity container for PASTEC from the REPET package.
