@@ -21,24 +21,21 @@ Stage: build
     tar -xvf PASTEC_linux-x64-2.0.tar.gz
 
     ## Fix on PASTEC modules
-    # for pkg in $(ls -d /opt/PASTEC_linux-x64-2.0/*/); do
-    #     for module in $(ls -1 $pkg/*py); do
-    #         sed 's/from commons./from /g' $module > tmp && cat tmp > $module && rm tmp
-    #         sed 's/from PASTEC./from /g' $module > tmp && cat tmp > $module && rm tmp
-    #     done
-    # done 2> /dev/null
-    # sed 's/except (BadOptionError, OptionValueError), err:/except (BadOptionError, OptionValueError):/g' /opt/PASTEC_linux-x64-2.0/commons/core/utils/RepetOptionParser.py > tmp && cat tmp > /opt/PASTEC_linux-x64-2.0/commons/core/utils/RepetOptionParser.py && rm tmp
-    # sed 's/print "WARNING: unknown symbol '%s', replacing it by N" % (self.sequence[i])/print("WARNING: unknown symbol '%s', replacing it by N" % (self.sequence[i]))/g' /opt/PASTEC_linux-x64-2.0/commons/core/seq/Bioseq.py > tmp && cat tmp > /opt/PASTEC_linux-x64-2.0/commons/core/seq/Bioseq.py && rm tmp
+    for pkg in $(ls -d /opt/PASTEC_linux-x64-2.0/*/); do
+        for module in $(ls -1 $pkg/*py); do
+            sed 's/from commons./from /g' $module > tmp && cat tmp > $module && rm tmp
+            sed 's/from PASTEC./from /g' $module > tmp && cat tmp > $module && rm tmp
+        done
+    done 2> /dev/null
 
     ## Installing dependancies of PASTEC
-    # apt-get install -y \
-        # python2
-    #     python3=3.8.2-0ubuntu2 \
-    #     python3-distutils=3.8.2-1ubuntu1 \
-    #     python3-apt=2.0.0 \
-    #     build-essential=12.8ubuntu1 \
-    #     python-dev-is-python3=3.8.2-4 \
-    #     default-libmysqlclient-dev=1.0.5ubuntu2
+    apt-get install -y \
+        python3=3.8.2-0ubuntu2 \
+        python3-distutils=3.8.2-1ubuntu1 \
+        python3-apt=2.0.0 \
+        build-essential=12.8ubuntu1 \
+        python-dev-is-python3=3.8.2-4 \
+        default-libmysqlclient-dev=1.0.5ubuntu2
     
     wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7-minimal_2.7.18-1~20.04.1_amd64.deb
     wget http://cz.archive.ubuntu.com/ubuntu/pool/main/m/mime-support/mime-support_3.64ubuntu1_all.deb
@@ -58,83 +55,48 @@ Stage: build
     dpkg -i python2.7_2.7.18-1~20.04.1_amd64.deb
     dpkg -i python-pip-whl_20.0.2-5ubuntu1.5_all.deb
     
-    # ### Installin pip
+    ### Installin pip
     cd /opt
     wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
     python2.7 get-pip.py
-    # wget https://bootstrap.pypa.io/get-pip.py
-    # python3 get-pip.py
 
     ### Installing Python modules
     pip install PyYAML==5.4.1
 
     ### Installing mysql
-    cd /opt
-    git clone https://github.com/TommasoBarberis/TE_Aalb.git
-    cd TE_Aalb/singularity
-    bash install_mysql.sh
+    export DEBIAN_FRONTEND=noninteractive
+    MYSQL_ROOT_PASSWORD="my_secret_password"
+    echo debconf mysql-server/root_password password $MYSQL_ROOT_PASSWORD | debconf-set-selections
+    echo debconf mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD | debconf-set-selections
+    apt-get -y install mysql-server
 
     ### Installing MySQLdb
     cd /opt
 
-    wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7-dev_2.7.18-1~20.04.1_amd64.deb
+    wget http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc-dev-bin_2.31-0ubuntu9.7_amd64.deb
     wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7_2.7.18-1~20.04.1_amd64.deb
+    wget http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc6_2.31-0ubuntu9.7_amd64.deb
+    wget http://cz.archive.ubuntu.com/ubuntu/pool/main/libx/libxcrypt/libcrypt-dev_4.4.10-10ubuntu4_amd64.deb
+    wget http://security.ubuntu.com/ubuntu/pool/main/l/linux/linux-libc-dev_5.4.0-105.119_amd64.deb
+    wget http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc6-dev_2.31-0ubuntu9.7_amd64.deb
+    wget http://security.ubuntu.com/ubuntu/pool/main/e/expat/libexpat1_2.2.9-1ubuntu0.4_amd64.deb
+    wget http://security.ubuntu.com/ubuntu/pool/main/e/expat/libexpat1-dev_2.2.9-1ubuntu0.4_amd64.deb
+    wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7-dev_2.7.18-1~20.04.1_amd64.deb
     wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/python2.7-dev_2.7.18-1~20.04.1_amd64.deb
 
 
-    dpkg -i libpython2.7-dev_2.7.18-1~20.04.1_amd64.deb
     dpkg -i libpython2.7_2.7.18-1~20.04.1_amd64.deb
+    dpkg -i libc-dev-bin_2.31-0ubuntu9.7_amd64.deb
+    dpkg -i libc6_2.31-0ubuntu9.7_amd64.deb
+    dpkg -i libcrypt-dev_4.4.10-10ubuntu4_amd64.deb
+    dpkg -i linux-libc-dev_5.4.0-105.119_amd64.deb
+    dpkg -i libc6-dev_2.31-0ubuntu9.7_amd64.deb 
+    dpkg -i libexpat1_2.2.9-1ubuntu0.4_amd64.deb
+    dpkg -i libexpat1-dev_2.2.9-1ubuntu0.4_amd64.deb 
+    dpkg -i libpython2.7-dev_2.7.18-1~20.04.1_amd64.deb
     dpkg -i python2.7-dev_2.7.18-1~20.04.1_amd64.deb
 
     pip install mysqlclient==1.4.6
-        # wget http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc-dev-bin_2.31-0ubuntu9.7_amd64.deb
-    # wget http://cz.archive.ubuntu.com/ubuntu/pool/main/libx/libxcrypt/libcrypt-dev_4.4.10-10ubuntu4_amd64.deb
-    # wget http://security.ubuntu.com/ubuntu/pool/main/l/linux/linux-libc-dev_5.4.0-105.119_amd64.deb
-    # wget http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc6_2.31-0ubuntu9.7_amd64.deb
-    # wget http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc6-dev_2.31-0ubuntu9.7_amd64.deb
-    # wget http://security.ubuntu.com/ubuntu/pool/main/e/expat/libexpat1_2.2.9-1ubuntu0.4_amd64.deb
-    # wget http://security.ubuntu.com/ubuntu/pool/main/e/expat/libexpat1-dev_2.2.9-1ubuntu0.4_amd64.deb
-    # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7_2.7.18-1~20.04.1_amd64.deb
-    # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7-dev_2.7.18-1~20.04.1_amd64.deb
-    # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/python2.7-dev_2.7.18-1~20.04.1_amd64.deb
-
-    # dpkg -i libc-dev-bin_2.31-0ubuntu9.7_amd64.deb
-    # dpkg -i libcrypt-dev_4.4.10-10ubuntu4_amd64.deb
-    # dpkg -i linux-libc-dev_5.4.0-105.119_amd64.deb
-    # dpkg -i libc6_2.31-0ubuntu9.7_amd64.deb
-    # dpkg -i libc6-dev_2.31-0ubuntu9.7_amd64.deb 
-    # dpkg -i libexpat1_2.2.9-1ubuntu0.4_amd64.deb
-    # dpkg -i libexpat1-dev_2.2.9-1ubuntu0.4_amd64.deb 
-    # dpkg -i libpython2.7_2.7.18-1~20.04.1_amd64.deb
-    # dpkg -i libpython2.7-dev_2.7.18-1~20.04.1_amd64.deb 
-    # dpkg -i python2.7-dev_2.7.18-1~20.04.1_amd64.deb
-
-    # apt-get install -y default-libmysqlclient-dev
-
-    # wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/p/python-defaults/libpython2-dev_2.7.17-2ubuntu4_amd64.deb
-    # wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/p/python-defaults/python2-minimal_2.7.17-2ubuntu4_amd64.deb
-    # wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/p/python-defaults/libpython2-stdlib_2.7.17-2ubuntu4_amd64.deb
-    # wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/p/python-defaults/python2_2.7.17-2ubuntu4_amd64.deb
-    # wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/p/python-defaults/python2-dev_2.7.17-2ubuntu4_amd64.deb
-    # wget http://cz.archive.ubuntu.com/ubuntu/pool/main/p/python-defaults/libpython-dev_2.7.15~rc1-1_amd64.deb
-    # wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/b/boost1.71/libboost-mpi-python1.71-dev_1.71.0-6ubuntu6_amd64.deb
-    # wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/b/boost-defaults/libboost-mpi-python-dev_1.71.0.0ubuntu2_amd64.deb
-    # wget http://security.ubuntu.com/ubuntu/pool/main/p/python2.7/python2.7-dev_2.7.17-1~18.04ubuntu1.7_amd64.deb
-
-    # dpkg -i libpython2-dev_2.7.17-2ubuntu4_amd64.deb
-    # dpkg -i python2-minimal_2.7.17-2ubuntu4_amd64.deb
-    # dpkg -i libpython2-stdlib_2.7.17-2ubuntu4_amd64.deb
-    # dpkg -i python2_2.7.17-2ubuntu4_amd64.deb
-    # dpkg -i python2-dev_2.7.17-2ubuntu4_amd64.deb
-
-    # # pip install setuptools==44.1.1
-    # # apt-get install -y \
-    # #     libmysqlclient-dev=8.0.19-0ubuntu5 \
-    # #     libffi-dev=3.3-4
-    # #     build-essential=12.8ubuntu1
-    #     # apt-get install libpq-dev python-dev libxml2-dev libxslt1-dev libldap2-dev libsasl2-dev libffi-dev
-    #     # apt-get install python3-dev default-libmysqlclient-dev build-essential
-    # # pip3 install mysqlclient==2.1.0
 
 
     ## Installing optional dependencies for PASTEC
@@ -182,13 +144,32 @@ Stage: build
     export PATH=/opt/ncbi-blast-2.13.0+/bin:$PATH
     export PATH=/opt/:$PATH
     export REPET_PATH=/opt/PASTEC_linux-x64-2.0
-    export PYTHONPATH=/opt/PASTEC_linux-x64-2.0/PASTEC:/opt/PASTEC_linux-x64-2.0/commons
+    export PYTHONPATH=/opt/PASTEC_linux-x64-2.0/PASTEC:/opt/PASTEC_linux-x64-2.0/commons:/opt/PASTEC_linux-x64-2.0/PASTEC:/opt/PASTEC_linux-x64-2.0/PASTEC
 
 %runscript
 ## Parsing parameters
 # script wtih PASTEC command
 # path to nucl lib
-bash /opt/TE_Aalb/singularity/parse_param.sh $*
+
+    param=($*)
+    echo $param
+
+    ## Parsing parameter
+    for ((index=0; index <= ${#param[@]}; index++)); do
+        case ${p} in
+        -lib)
+            NUCL_BANK="${param[index+1]}"
+            shift
+            shift
+            ;;
+        -*|--*)
+            echo "Unknown option $1"
+            exit 1
+            ;;
+        esac
+    done
+
+    echo $NUCL_BANK
 
 %help
 Singularity container for PASTEC from the REPET package.
