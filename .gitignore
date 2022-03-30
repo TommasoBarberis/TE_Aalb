@@ -11,3 +11,4 @@ singularity/mysql.def
 singularity/mysql.simg
 singularity/pastec_from_sandbox.sif
 singularity/PASTEClassifier.py
+singularity/PASTEC/test

@@ -132,8 +132,14 @@ Stage: build
     sed 's/project_name: <your_project_name>/project_name: TE_classification/g' | \
     sed 's/project_dir: <absolute_path_to_your_project_directory>/project_dir: \/mnt\/PASTEC_output/g' | \
     sed 's/blast: ncbi/blast: ncbiplus/g' | \
-    sed "s/TE_HMM_profiles: <bank_of_HMM_profiles>/TE_HMM_profiles: $HOME\/ProfilesBankForREPET_Pfam32.0.hmm/g" | \
+    sed "s~TE_HMM_profiles: <bank_of_HMM_profiles>~TE_HMM_profiles: $HOME/ProfilesBankForREPET_Pfam32.0.hmm~g" | \
     > tmp && cat tmp > /opt/PASTEC_linux-x64-2.0/config/PASTEClassifier.cfg && rm tmp
+
+    ## Installing wrapper for PASTEC
+    cd /opt
+    git clone https://github.com/TommasoBarberis/TE_Aalb.git
+    mv TE_Aalb/singularity/PASTEC/run_pastec.py .
+    rm -rf TE_Aalb
 
     ## Clean
     cd /opt
@@ -146,30 +152,8 @@ Stage: build
     export REPET_PATH=/opt/PASTEC_linux-x64-2.0
     export PYTHONPATH=/opt/PASTEC_linux-x64-2.0/PASTEC:/opt/PASTEC_linux-x64-2.0/commons:/opt/PASTEC_linux-x64-2.0/PASTEC:/opt/PASTEC_linux-x64-2.0/PASTEC
 
-%runscript
-## Parsing parameters
-# script wtih PASTEC command
-# path to nucl lib
-
-    param=($*)
-    echo $param
-
-    ## Parsing parameter
-    for ((index=0; index <= ${#param[@]}; index++)); do
-        case ${p} in
-        -lib)
-            NUCL_BANK="${param[index+1]}"
-            shift
-            shift
-            ;;
-        -*|--*)
-            echo "Unknown option $1"
-            exit 1
-            ;;
-        esac
-    done
-
-    echo $NUCL_BANK
+#TODO
+# README et expliquer comment configurer le fichier .cfg
 
 %help
 Singularity container for PASTEC from the REPET package.
