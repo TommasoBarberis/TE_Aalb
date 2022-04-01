@@ -1,4 +1,4 @@
-Bootstrap: debootstrap
+Bootstrap: debootstrap 
 OSVersion: focal
 MirrorURL:  http://us.archive.ubuntu.com/ubuntu/
 Stage: build
@@ -7,14 +7,31 @@ Stage: build
     AUTHOR Tommaso Barberis tommasobarberis98@gmail.com
     VERSION  v1.0.0
 
-%environment
-
 %post
-    # apt-get update && apt-get install -y \
+    # apt-get update && apt-get upgrade 
+    # dpkg -i mysql-apt-config_0.8.22-1_all.deb 
+    # apt -f install
+    # dpkg -i mysql-apt-config_0.8.22-1_all.deb 
+    # apt-get install lsb-release
+    # dpkg -i mysql-apt-config_0.8.22-1_all.deb 
+    # apt-get install wget
+    # dpkg -i mysql-apt-config_0.8.22-1_all.deb 
+    # apt-get install gnupg
+    # dpkg -i mysql-apt-config_0.8.22-1_all.deb 
+    # apt-get install mysql-server
+    # mysql_secure_installation utility
+    # service mysql start
+
+    # export DEBIAN_FRONTEND=noninteractive
+    # MYSQL_ROOT_PASSWORD="root"
+    # echo debconf mysql-server/root_password password $MYSQL_ROOT_PASSWORD | debconf-set-selections
+    # echo debconf mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD | debconf-set-selections
+    # apt-get update && apt-get upgrade && apt-get install -y \
+        # mysql-server
     #     wget=1.20.3-1ubuntu1 \
     #     apt-utils=2.0.2 \
     #     git=1:2.25.1-1ubuntu3
-    
+
     # ## Download PASTEC
     # cd /opt
     # wget https://urgi.versailles.inrae.fr/download/repet/PASTEC_linux-x64-2.0.tar.gz
@@ -146,9 +163,10 @@ Stage: build
 
 #TODO
 # README et expliquer comment configurer le fichier .cfg
-# %runscript
-# usermod -d /var/lib/mysql/ mysql
-# chown mysql /var/lib/mysql/
+%runscript
+
+# usermod -d /mnt/mysql/var/lib/mysql/ mysql
+# chown mysql /mnt/mysql/var/lib/mysql/
 # rm /var/lib/mysql/ib_logfile*
 # apt-get remove mysql-server
 # apt-get purge mysql-server

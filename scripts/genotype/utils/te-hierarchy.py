@@ -7,6 +7,9 @@ Input:file with a header by line for each consensus
 
 import sys
 
+with open('te-hierarchy.txt', "a+") as h:
+    h.write("id\tfamily\torder\n")
+
 with open(sys.argv[1], 'r') as f:
     lines = f.readlines()
     for line in lines:
@@ -22,5 +25,5 @@ with open(sys.argv[1], 'r') as f:
             family = fields
         
         
-        with open('hierarchy.txt', "a+") as h:
+        with open('te-hierarchy.txt', "a+") as h:
             h.write(te_id + '\t' + family + '\t' + order + "\n")        
