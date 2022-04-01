@@ -52,10 +52,13 @@ args = parser.parse_args()
 cdhit_file = args.i
 copy_file = args.fasta
 out_dir = args.o
+
 if out_dir[-1] == "/":
     out_dir = out_dir[:-1]
 if not os.path.exists(out_dir):
     os.makedirs(out_dir)
+out_dir = os.path.abspath(out_dir)
+
 n_cpus = int(args.t)
 
 
@@ -136,7 +139,7 @@ def update_and_clean(out_dir):
     # add the sequence to consensi.fa
     tmp_cons = glob.glob(out_dir + '/*.refiner_cons')
 
-    with open(consensi, "a") as f:
+    with open(consensi, "a+") as f:
         for cons_fasta in tmp_cons:
             with open(cons_fasta, "r") as ref_file:
                 data = ref_file.read()
@@ -146,7 +149,7 @@ def update_and_clean(out_dir):
     # add the alignement to consensi.stk
     tmp_stk = glob.glob(out_dir + '/*.refiner.stk')
 
-    with open(stk, "a") as f:
+    with open(stk, "a+") as f:
         for cons_stk in tmp_stk:
             with open(cons_stk, "r") as ref_file:
                 data = ref_file.read()
@@ -202,24 +205,26 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
             nb_repr_within_copies += 1
 
             if len(cdhit_dict[seq_id]) == 0: # the cluster is singleton
-                
+                header = str(seq_id).replace("|", "_")
                 nb_singleton += 1                
-                with open(singleton, "a") as f:
-                    f.write(">" + str(seq_id) + "\n" + str(seqs_dict[seq_id]) + "\n")
+                with open(singleton, "a+") as f:                    
+                    f.write(">" + header + "\n" + str(seqs_dict[seq_id]) + "\n")
     
             else: # the cluster is not singleton
                 
                 nb_cluster += 1
                 nb_cluster_file +=  1
 
-                cluster_file = out_dir + "/" + seq_id + ".clst.fasta"
+                cluster_file = out_dir + "/" + str(nb_cluster_file) + ".clst.fasta"
                 seqs_id = cdhit_dict[seq_id]
                 seqs_id.append(seq_id) # add representative sequence
                 
                 # write sequences of the cluster in a fasta file
                 with open(cluster_file, "w") as f:
+                    c = 0
                     for seq in seqs_id:
-                        f.write(">" + seq + "\n" + seqs_dict[seq] + "\n")
+                        f.write(">" + "sequence" + str(c) + "\n" + seqs_dict[seq] + "\n")
+                        c += 1
                                 
                 if nb_cluster_file == ncpu:
                     do_work(ncpu, out_dir)
