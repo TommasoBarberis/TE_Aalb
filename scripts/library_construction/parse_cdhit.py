@@ -193,8 +193,8 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
     c = 0 # counter for naming consensus sequences
 
     # main   
-    subprocess.run(["cd", out_dir])    
     nb_cluster_file = 0 # to count how many file generate for parallelization
+    os.chdir(out_dir)
 
     for seq_id in seqs_dict.keys():
 
@@ -222,7 +222,7 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
                         f.write(">" + seq + "\n" + seqs_dict[seq] + "\n")
                                 
                 if nb_cluster_file == ncpu:
-                    do_work(ncpu)
+                    do_work(ncpu, out_dir)
                     update_and_clean(out_dir)    
                     nb_cluster_file = 0                        
 

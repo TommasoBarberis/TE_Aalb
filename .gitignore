@@ -3,12 +3,9 @@ data/
 __pycache__/
 test/
 singularity/TE_Aalb.sif
-singularity/PASTEC.sif
-singularity/PASTEC_dev/
 singularity/PASTEClassifier.cfg
 singularity/my_sbox/
-singularity/mysql.def
-singularity/mysql.simg
-singularity/pastec_from_sandbox.sif
 singularity/PASTEClassifier.py
 singularity/PASTEC/test
+singularity/PASTEC/PASTEC.sif
+singularity/PASTEC/my_sbox/

@@ -5,145 +5,137 @@ Stage: build
 
 %labels
     AUTHOR Tommaso Barberis tommasobarberis98@gmail.com
-    VERSION  v1.0
+    VERSION  v1.0.0
 
 %environment
 
 %post
-    apt-get update && apt-get install -y \
-        wget=1.20.3-1ubuntu1 \
-        apt-utils=2.0.2 \
-        git=1:2.25.1-1ubuntu3
+    # apt-get update && apt-get install -y \
+    #     wget=1.20.3-1ubuntu1 \
+    #     apt-utils=2.0.2 \
+    #     git=1:2.25.1-1ubuntu3
     
-    ## Download PASTEC
-    cd /opt
-    wget https://urgi.versailles.inrae.fr/download/repet/PASTEC_linux-x64-2.0.tar.gz
-    tar -xvf PASTEC_linux-x64-2.0.tar.gz
+    # ## Download PASTEC
+    # cd /opt
+    # wget https://urgi.versailles.inrae.fr/download/repet/PASTEC_linux-x64-2.0.tar.gz
+    # tar -xvf PASTEC_linux-x64-2.0.tar.gz
 
-    ## Fix on PASTEC modules
-    for pkg in $(ls -d /opt/PASTEC_linux-x64-2.0/*/); do
-        for module in $(ls -1 $pkg/*py); do
-            sed 's/from commons./from /g' $module > tmp && cat tmp > $module && rm tmp
-            sed 's/from PASTEC./from /g' $module > tmp && cat tmp > $module && rm tmp
-        done
-    done 2> /dev/null
+    # ## Fix on PASTEC modules
+    # for pkg in $(ls -d /opt/PASTEC_linux-x64-2.0/*/); do
+    #     for module in $(ls -1 $pkg/*py); do
+    #         sed 's/from commons./from /g' $module > tmp && cat tmp > $module && rm tmp
+    #         sed 's/from PASTEC./from /g' $module > tmp && cat tmp > $module && rm tmp
+    #     done
+    # done 2> /dev/null
 
-    ## Installing dependancies of PASTEC
-    apt-get install -y \
-        python3=3.8.2-0ubuntu2 \
-        python3-distutils=3.8.2-1ubuntu1 \
-        python3-apt=2.0.0 \
-        build-essential=12.8ubuntu1 \
-        python-dev-is-python3=3.8.2-4 \
-        default-libmysqlclient-dev=1.0.5ubuntu2
+    # ## Installing dependancies of PASTEC
+    # apt-get install -y \
+    #     python3=3.8.2-0ubuntu2 \
+    #     python3-distutils=3.8.2-1ubuntu1 \
+    #     python3-apt=2.0.0 \
+    #     build-essential=12.8ubuntu1 \
+    #     python-dev-is-python3=3.8.2-4 \
+    #     default-libmysqlclient-dev=1.0.5ubuntu2
     
-    wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7-minimal_2.7.18-1~20.04.1_amd64.deb
-    wget http://cz.archive.ubuntu.com/ubuntu/pool/main/m/mime-support/mime-support_3.64ubuntu1_all.deb
-    wget http://cz.archive.ubuntu.com/ubuntu/pool/main/r/readline/readline-common_8.0-4_all.deb
-    wget http://cz.archive.ubuntu.com/ubuntu/pool/main/r/readline/libreadline8_8.0-4_amd64.deb
-    wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7-stdlib_2.7.18-1~20.04.1_amd64.deb
-    wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/python2.7-minimal_2.7.18-1~20.04.1_amd64.deb
-    wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/python2.7_2.7.18-1~20.04.1_amd64.deb
-    wget http://security.ubuntu.com/ubuntu/pool/universe/p/python-pip/python-pip-whl_20.0.2-5ubuntu1.5_all.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7-minimal_2.7.18-1~20.04.1_amd64.deb
+    # wget http://cz.archive.ubuntu.com/ubuntu/pool/main/m/mime-support/mime-support_3.64ubuntu1_all.deb
+    # wget http://cz.archive.ubuntu.com/ubuntu/pool/main/r/readline/readline-common_8.0-4_all.deb
+    # wget http://cz.archive.ubuntu.com/ubuntu/pool/main/r/readline/libreadline8_8.0-4_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7-stdlib_2.7.18-1~20.04.1_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/python2.7-minimal_2.7.18-1~20.04.1_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/python2.7_2.7.18-1~20.04.1_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python-pip/python-pip-whl_20.0.2-5ubuntu1.5_all.deb
 
-    dpkg -i libpython2.7-minimal_2.7.18-1~20.04.1_amd64.deb
-    dpkg -i mime-support_3.64ubuntu1_all.deb
-    dpkg -i readline-common_8.0-4_all.deb
-    dpkg -i libreadline8_8.0-4_amd64.deb
-    dpkg -i libpython2.7-stdlib_2.7.18-1~20.04.1_amd64.deb
-    dpkg -i python2.7-minimal_2.7.18-1~20.04.1_amd64.deb
-    dpkg -i python2.7_2.7.18-1~20.04.1_amd64.deb
-    dpkg -i python-pip-whl_20.0.2-5ubuntu1.5_all.deb
+    # dpkg -i libpython2.7-minimal_2.7.18-1~20.04.1_amd64.deb
+    # dpkg -i mime-support_3.64ubuntu1_all.deb
+    # dpkg -i readline-common_8.0-4_all.deb
+    # dpkg -i libreadline8_8.0-4_amd64.deb
+    # dpkg -i libpython2.7-stdlib_2.7.18-1~20.04.1_amd64.deb
+    # dpkg -i python2.7-minimal_2.7.18-1~20.04.1_amd64.deb
+    # dpkg -i python2.7_2.7.18-1~20.04.1_amd64.deb
+    # dpkg -i python-pip-whl_20.0.2-5ubuntu1.5_all.deb
     
-    ### Installin pip
-    cd /opt
-    wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
-    python2.7 get-pip.py
+    # ### Installin pip
+    # cd /opt
+    # wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
+    # python2.7 get-pip.py
 
-    ### Installing Python modules
-    pip install PyYAML==5.4.1
+    # ### Installing Python modules
+    # pip install PyYAML==5.4.1
 
     ### Installing mysql
-    export DEBIAN_FRONTEND=noninteractive
-    MYSQL_ROOT_PASSWORD="my_secret_password"
-    echo debconf mysql-server/root_password password $MYSQL_ROOT_PASSWORD | debconf-set-selections
-    echo debconf mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD | debconf-set-selections
-    apt-get -y install mysql-server
+    # export DEBIAN_FRONTEND=noninteractive
+    # MYSQL_ROOT_PASSWORD="root"
+    # echo debconf mysql-server/root_password password $MYSQL_ROOT_PASSWORD | debconf-set-selections
+    # echo debconf mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD | debconf-set-selections
+    # apt-get -y install mysql-server
 
     ### Installing MySQLdb
     cd /opt
 
-    wget http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc-dev-bin_2.31-0ubuntu9.7_amd64.deb
-    wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7_2.7.18-1~20.04.1_amd64.deb
-    wget http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc6_2.31-0ubuntu9.7_amd64.deb
-    wget http://cz.archive.ubuntu.com/ubuntu/pool/main/libx/libxcrypt/libcrypt-dev_4.4.10-10ubuntu4_amd64.deb
-    wget http://security.ubuntu.com/ubuntu/pool/main/l/linux/linux-libc-dev_5.4.0-105.119_amd64.deb
-    wget http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc6-dev_2.31-0ubuntu9.7_amd64.deb
-    wget http://security.ubuntu.com/ubuntu/pool/main/e/expat/libexpat1_2.2.9-1ubuntu0.4_amd64.deb
-    wget http://security.ubuntu.com/ubuntu/pool/main/e/expat/libexpat1-dev_2.2.9-1ubuntu0.4_amd64.deb
-    wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7-dev_2.7.18-1~20.04.1_amd64.deb
-    wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/python2.7-dev_2.7.18-1~20.04.1_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc-dev-bin_2.31-0ubuntu9.7_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7_2.7.18-1~20.04.1_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc6_2.31-0ubuntu9.7_amd64.deb
+    # wget http://cz.archive.ubuntu.com/ubuntu/pool/main/libx/libxcrypt/libcrypt-dev_4.4.10-10ubuntu4_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/main/l/linux/linux-libc-dev_5.4.0-105.119_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc6-dev_2.31-0ubuntu9.7_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/main/e/expat/libexpat1_2.2.9-1ubuntu0.4_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/main/e/expat/libexpat1-dev_2.2.9-1ubuntu0.4_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7-dev_2.7.18-1~20.04.1_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/python2.7-dev_2.7.18-1~20.04.1_amd64.deb
 
 
-    dpkg -i libpython2.7_2.7.18-1~20.04.1_amd64.deb
-    dpkg -i libc-dev-bin_2.31-0ubuntu9.7_amd64.deb
-    dpkg -i libc6_2.31-0ubuntu9.7_amd64.deb
-    dpkg -i libcrypt-dev_4.4.10-10ubuntu4_amd64.deb
-    dpkg -i linux-libc-dev_5.4.0-105.119_amd64.deb
-    dpkg -i libc6-dev_2.31-0ubuntu9.7_amd64.deb 
-    dpkg -i libexpat1_2.2.9-1ubuntu0.4_amd64.deb
-    dpkg -i libexpat1-dev_2.2.9-1ubuntu0.4_amd64.deb 
-    dpkg -i libpython2.7-dev_2.7.18-1~20.04.1_amd64.deb
-    dpkg -i python2.7-dev_2.7.18-1~20.04.1_amd64.deb
+    # dpkg -i libpython2.7_2.7.18-1~20.04.1_amd64.deb
+    # dpkg -i libc-dev-bin_2.31-0ubuntu9.7_amd64.deb
+    # dpkg -i libc6_2.31-0ubuntu9.7_amd64.deb
+    # dpkg -i libcrypt-dev_4.4.10-10ubuntu4_amd64.deb
+    # dpkg -i linux-libc-dev_5.4.0-105.119_amd64.deb
+    # dpkg -i libc6-dev_2.31-0ubuntu9.7_amd64.deb 
+    # dpkg -i libexpat1_2.2.9-1ubuntu0.4_amd64.deb
+    # dpkg -i libexpat1-dev_2.2.9-1ubuntu0.4_amd64.deb 
+    # dpkg -i libpython2.7-dev_2.7.18-1~20.04.1_amd64.deb
+    # dpkg -i python2.7-dev_2.7.18-1~20.04.1_amd64.deb
 
-    pip install mysqlclient==1.4.6
+    # pip install mysqlclient==1.4.6
 
 
     ## Installing optional dependencies for PASTEC
 
-    ### Installing BLAST+
-    cd /opt
-    wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.13.0/ncbi-blast-2.13.0+-x64-linux.tar.gz
-    tar -xvf ncbi-blast-2.13.0+-x64-linux.tar.gz
+    # ### Installing BLAST+
+    # cd /opt
+    # wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.13.0/ncbi-blast-2.13.0+-x64-linux.tar.gz
+    # tar -xvf ncbi-blast-2.13.0+-x64-linux.tar.gz
 
-    ### Installing HMMER3
-    wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/libd/libdivsufsort/libdivsufsort3_2.0.1-4_amd64.deb
-    wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/h/hmmer/hmmer_3.3+dfsg2-1_amd64.deb
+    # ### Installing HMMER3
+    # wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/libd/libdivsufsort/libdivsufsort3_2.0.1-4_amd64.deb
+    # wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/h/hmmer/hmmer_3.3+dfsg2-1_amd64.deb
     
-    dpkg -i libdivsufsort3_2.0.1-4_amd64.deb
-    dpkg -i hmmer_3.3+dfsg2-1_amd64.deb
+    # dpkg -i libdivsufsort3_2.0.1-4_amd64.deb
+    # dpkg -i hmmer_3.3+dfsg2-1_amd64.deb
 
-    ### Installing TRF
-    cd /opt
-    wget https://github.com/Benson-Genomics-Lab/TRF/releases/download/v4.09.1/trf409.linux64
-    chmod +x trf409.linux64
+    # ### Installing TRF
+    # cd /opt
+    # wget https://github.com/Benson-Genomics-Lab/TRF/releases/download/v4.09.1/trf409.linux64
+    # chmod +x trf409.linux64
 
     ## Downloading Pfam
-    cd ~
-    wget https://urgi.versailles.inra.fr/download/repet/profiles/ProfilesBankForREPET_Pfam32.0.hmm.tar.gz
-    tar -xvf ProfilesBankForREPET_Pfam32.0.hmm.tar.gz
+    # cd /media
+    # wget https://urgi.versailles.inra.fr/download/repet/profiles/ProfilesBankForREPET_Pfam32.0.hmm.tar.gz
+    # tar -xvf ProfilesBankForREPET_Pfam32.0.hmm.tar.gz
 
-    ## Setup PASTEC
-    mkdir -p /mnt/PASTEC_output
-    sed 's/repet_host: <your_MySQL_host>/repet_host: mysql/g' /opt/PASTEC_linux-x64-2.0/config/PASTEClassifier.cfg | \
-    sed 's/repet_user: <your_MySQL_login>/repet_user: root/g' | \
-    sed "s/repet_pw: <your_MySQL_password>/repet_pw: $MYSQL_ROOT_PASSWORD/g" | \
-    sed 's/repet_db: <your_MySQL_db>/repet_db: mysql/g' | \
-    sed 's/project_name: <your_project_name>/project_name: TE_classification/g' | \
-    sed 's/project_dir: <absolute_path_to_your_project_directory>/project_dir: \/mnt\/PASTEC_output/g' | \
-    sed 's/blast: ncbi/blast: ncbiplus/g' | \
-    sed "s~TE_HMM_profiles: <bank_of_HMM_profiles>~TE_HMM_profiles: $HOME/ProfilesBankForREPET_Pfam32.0.hmm~g" | \
-    > tmp && cat tmp > /opt/PASTEC_linux-x64-2.0/config/PASTEClassifier.cfg && rm tmp
-
-    ## Installing wrapper for PASTEC
-    cd /opt
-    git clone https://github.com/TommasoBarberis/TE_Aalb.git
-    mv TE_Aalb/singularity/PASTEC/run_pastec.py .
-    rm -rf TE_Aalb
+    # ## Setup PASTEC
+    # sed 's/repet_host: <your_MySQL_host>/repet_host: mysql/g' /opt/PASTEC_linux-x64-2.0/config/PASTEClassifier.cfg | \
+    # sed 's/repet_user: <your_MySQL_login>/repet_user: root/g' | \
+    # sed "s/repet_pw: <your_MySQL_password>/repet_pw: $MYSQL_ROOT_PASSWORD/g" | \
+    # sed 's/repet_db: <your_MySQL_db>/repet_db: mysql/g' | \
+    # # sed 's/project_name: <your_project_name>/project_name: TE_classification/g' | \
+    # sed 's/blast: ncbi/blast: ncbiplus/g' | \
+    # sed "s~TE_HMM_profiles: <bank_of_HMM_profiles>~TE_HMM_profiles: /media/ProfilesBankForREPET_Pfam32.0.hmm~g" | \
+    # > tmp && cat tmp > /opt/PASTEC_linux-x64-2.0/config/PASTEClassifier.cfg && rm tmp
 
     ## Clean
     cd /opt
-    rm *tar.gz *.deb
+    # rm *tar.gz *.deb
 
 %environment
     export PATH=/opt/PASTEC_linux-x64-2.0/bin:$PATH
@@ -154,6 +146,13 @@ Stage: build
 
 #TODO
 # README et expliquer comment configurer le fichier .cfg
+# %runscript
+# usermod -d /var/lib/mysql/ mysql
+# chown mysql /var/lib/mysql/
+# rm /var/lib/mysql/ib_logfile*
+# apt-get remove mysql-server
+# apt-get purge mysql-server
+# apt-get install mysql-server
 
 %help
 Singularity container for PASTEC from the REPET package.
