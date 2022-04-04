@@ -1,5 +1,6 @@
-Bootstrap: debootstrap 
-OSVersion: focal
+Bootstrap: debootstrap
+# from: synicix/walkerlab/mysql.sif
+OSVersion: xenial
 MirrorURL:  http://us.archive.ubuntu.com/ubuntu/
 Stage: build
 
@@ -8,15 +9,50 @@ Stage: build
     VERSION  v1.0.0
 
 %post
+    # rm -r /var/lib/dpkg/info/mysql*
     # apt-get update && apt-get upgrade 
-    # apt -f install
-    # apt-get install lsb-release
-    # apt-get install wget
-    # apt-get install gnupg
+    # apt-get install -y lsb-release wget gnupg git
+    
+    # cd /opt 
+
+    ## Install Expect and dependancies
+    # wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/e/expect/tcl-expect_5.45.4-2build1_amd64.deb
+    # wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/e/expect/expect_5.45.4-2build1_amd64.deb
+    # wget http://security.ubuntu.com/ubuntu/pool/main/t/tzdata/tzdata_2022a-0ubuntu0.20.04_all.deb
+    # wget http://cz.archive.ubuntu.com/ubuntu/pool/main/t/tcl8.6/libtcl8.6_8.6.10+dfsg-1_amd64.deb
+    # wget http://cz.archive.ubuntu.com/ubuntu/pool/main/t/tcl8.6/tcl8.6_8.6.10+dfsg-1_amd64.deb
+
+    # dpkg -i tzdata_2022a-0ubuntu0.20.04_all.deb
+    # dpkg -i libtcl8.6_8.6.10+dfsg-1_amd64.deb
+    # dpkg -i tcl8.6_8.6.10+dfsg-1_amd64.deb
+    # dpkg -i tcl-expect_5.45.4-2build1_amd64.deb
+    # dpkg -i expect_5.45.4-2build1_amd64.deb
+
+    # git clone https://github.com/TommasoBarberis/TE_Aalb.git
+    # chmod +x /opt/TE_Aalb/singularity/PASTEC/install_mysql.sh
+    
     # wget https://dev.mysql.com/get/mysql-apt-config_0.8.22-1_all.deb
-    # dpkg -i mysql-apt-config_0.8.22-1_all.deb 
-    # apt-get install mysql-server
+    # dpkg -i mysql-apt-config_0.8.22-1_all.deb
+    
+    # export DEBIAN_FRONTEND=noninteractive
+    
+    # tee /opt/configure_mysql.sh > /dev/null << EOF
+    
+    # spawn $(/opt/TE_Aalb/singularity/PASTEC/install_mysql.sh)
+    # expect "Which MySQL product do you wish to configure? "
+    # send "3\r"
+    # expect "Enable or disable MySQL preview packages "
+    # send "1\r"
+    # expect "Which MySQL product do you wish to configure? "
+    # send "4\r"
+
+    # EOF
+   
+    # apt-get install -y mysql-server
+    
     # service mysql start
+    # mysql_secure_installation
+
     # mysql_secure_installation
     
 
