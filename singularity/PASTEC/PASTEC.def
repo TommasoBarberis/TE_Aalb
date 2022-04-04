@@ -9,18 +9,16 @@ Stage: build
 
 %post
     # apt-get update && apt-get upgrade 
-    # dpkg -i mysql-apt-config_0.8.22-1_all.deb 
     # apt -f install
-    # dpkg -i mysql-apt-config_0.8.22-1_all.deb 
     # apt-get install lsb-release
-    # dpkg -i mysql-apt-config_0.8.22-1_all.deb 
     # apt-get install wget
-    # dpkg -i mysql-apt-config_0.8.22-1_all.deb 
     # apt-get install gnupg
+    # wget https://dev.mysql.com/get/mysql-apt-config_0.8.22-1_all.deb
     # dpkg -i mysql-apt-config_0.8.22-1_all.deb 
     # apt-get install mysql-server
-    # mysql_secure_installation utility
     # service mysql start
+    # mysql_secure_installation
+    
 
     # export DEBIAN_FRONTEND=noninteractive
     # MYSQL_ROOT_PASSWORD="root"
