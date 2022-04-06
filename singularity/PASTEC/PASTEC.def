@@ -1,93 +1,63 @@
-Bootstrap: debootstrap
-# from: synicix/walkerlab/mysql.sif
-OSVersion: xenial
-MirrorURL:  http://us.archive.ubuntu.com/ubuntu/
-Stage: build
+Bootstrap: docker
+from: mysql:5.7.21
 
 %labels
     AUTHOR Tommaso Barberis tommasobarberis98@gmail.com
     VERSION  v1.0.0
 
 %post
-    # rm -r /var/lib/dpkg/info/mysql*
-    # apt-get update && apt-get upgrade 
-    # apt-get install -y lsb-release wget gnupg git
-    
-    # cd /opt 
+    cd /opt 
 
-    ## Install Expect and dependancies
-    # wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/e/expect/tcl-expect_5.45.4-2build1_amd64.deb
-    # wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/e/expect/expect_5.45.4-2build1_amd64.deb
-    # wget http://security.ubuntu.com/ubuntu/pool/main/t/tzdata/tzdata_2022a-0ubuntu0.20.04_all.deb
-    # wget http://cz.archive.ubuntu.com/ubuntu/pool/main/t/tcl8.6/libtcl8.6_8.6.10+dfsg-1_amd64.deb
-    # wget http://cz.archive.ubuntu.com/ubuntu/pool/main/t/tcl8.6/tcl8.6_8.6.10+dfsg-1_amd64.deb
+    apt-get update
+    apt-get install -y --allow-unauthenticated \
+        python-pip \
+        libmysqlclient-dev \
+        wget \
+        hmmer
 
-    # dpkg -i tzdata_2022a-0ubuntu0.20.04_all.deb
-    # dpkg -i libtcl8.6_8.6.10+dfsg-1_amd64.deb
-    # dpkg -i tcl8.6_8.6.10+dfsg-1_amd64.deb
-    # dpkg -i tcl-expect_5.45.4-2build1_amd64.deb
-    # dpkg -i expect_5.45.4-2build1_amd64.deb
+    ## Download PASTEC
+    wget https://urgi.versailles.inrae.fr/download/repet/PASTEC_linux-x64-2.0.tar.gz
+    tar -xvf PASTEC_linux-x64-2.0.tar.gz
 
-    # git clone https://github.com/TommasoBarberis/TE_Aalb.git
-    # chmod +x /opt/TE_Aalb/singularity/PASTEC/install_mysql.sh
-    
-    # wget https://dev.mysql.com/get/mysql-apt-config_0.8.22-1_all.deb
-    # dpkg -i mysql-apt-config_0.8.22-1_all.deb
-    
-    # export DEBIAN_FRONTEND=noninteractive
-    
-    # tee /opt/configure_mysql.sh > /dev/null << EOF
-    
-    # spawn $(/opt/TE_Aalb/singularity/PASTEC/install_mysql.sh)
-    # expect "Which MySQL product do you wish to configure? "
-    # send "3\r"
-    # expect "Enable or disable MySQL preview packages "
-    # send "1\r"
-    # expect "Which MySQL product do you wish to configure? "
-    # send "4\r"
+    ## Fix on PASTEC modules
+    for pkg in $(ls -d /opt/PASTEC_linux-x64-2.0/*/); do
+        for module in $(ls -1 $pkg/*py); do
+            sed 's/from commons./from /g' $module > tmp && cat tmp > $module && rm tmp
+            sed 's/from PASTEC./from /g' $module > tmp && cat tmp > $module && rm tmp
+        done
+    done 2> /dev/null
 
-    # EOF
-   
-    # apt-get install -y mysql-server
-    
-    # service mysql start
-    # mysql_secure_installation
-
-    # mysql_secure_installation
-    
-
-    # export DEBIAN_FRONTEND=noninteractive
-    # MYSQL_ROOT_PASSWORD="root"
-    # echo debconf mysql-server/root_password password $MYSQL_ROOT_PASSWORD | debconf-set-selections
-    # echo debconf mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD | debconf-set-selections
-    # apt-get update && apt-get upgrade && apt-get install -y \
-        # mysql-server
-    #     wget=1.20.3-1ubuntu1 \
-    #     apt-utils=2.0.2 \
-    #     git=1:2.25.1-1ubuntu3
-
-    # ## Download PASTEC
-    # cd /opt
-    # wget https://urgi.versailles.inrae.fr/download/repet/PASTEC_linux-x64-2.0.tar.gz
-    # tar -xvf PASTEC_linux-x64-2.0.tar.gz
-
-    # ## Fix on PASTEC modules
-    # for pkg in $(ls -d /opt/PASTEC_linux-x64-2.0/*/); do
-    #     for module in $(ls -1 $pkg/*py); do
-    #         sed 's/from commons./from /g' $module > tmp && cat tmp > $module && rm tmp
-    #         sed 's/from PASTEC./from /g' $module > tmp && cat tmp > $module && rm tmp
-    #     done
-    # done 2> /dev/null
-
-    # ## Installing dependancies of PASTEC
+    ## Installing dependancies of PASTEC
     # apt-get install -y \
-    #     python3=3.8.2-0ubuntu2 \
-    #     python3-distutils=3.8.2-1ubuntu1 \
-    #     python3-apt=2.0.0 \
-    #     build-essential=12.8ubuntu1 \
-    #     python-dev-is-python3=3.8.2-4 \
-    #     default-libmysqlclient-dev=1.0.5ubuntu2
+    #     python3-apt \
+    #     build-essential \
+    #     default-libmysqlclient-dev 
+       
+    # wget http://ftp.de.debian.org/debian/pool/main/g/glibc/libc6_2.28-10+deb10u1_amd64.deb
+    # wget http://ftp.de.debian.org/debian/pool/main/o/openssl/libssl1.1_1.1.1n-0+deb10u1_amd64.deb
+    # wget http://ftp.de.debian.org/debian/pool/main/p/python3.7/libpython3.7-minimal_3.7.3-2+deb10u3_amd64.deb
+    # wget http://ftp.de.debian.org/debian/pool/main/p/python3.7/python3.7-minimal_3.7.3-2+deb10u3_amd64.deb
+    # wget http://ftp.de.debian.org/debian/pool/main/p/python3-defaults/python3-minimal_3.7.3-1_amd64.deb
+    # wget http://ftp.de.debian.org/debian/pool/main/n/ncurses/libtinfo6_6.1+20181013-2+deb10u2_amd64.deb
+    # wget http://ftp.de.debian.org/debian/pool/main/n/ncurses/libncursesw6_6.1+20181013-2+deb10u2_amd64.deb
+    # wget http://ftp.de.debian.org/debian/pool/main/p/python3.7/libpython3.7-stdlib_3.7.3-2+deb10u3_amd64.deb
+    # wget http://ftp.de.debian.org/debian/pool/main/p/python3.7/python3.7_3.7.3-2+deb10u3_amd64.deb
+    # wget http://ftp.de.debian.org/debian/pool/main/p/python3-defaults/libpython3-stdlib_3.7.3-1_amd64.deb
+    # wget http://ftp.de.debian.org/debian/pool/main/p/python3-defaults/python3_3.7.3-1_amd64.deb
+    # wget http://ftp.de.debian.org/debian/pool/main/p/python3-stdlib-extensions/python3-lib2to3_3.7.3-1_all.deb
     
+    # wget http://ftp.de.debian.org/debian/pool/main/libx/libxcrypt/libcrypt1_4.4.18-4_amd64.deb
+
+    # wget http://ftp.de.debian.org/debian/pool/main/g/glibc/libc6_2.31-13+deb11u3_amd64.deb
+
+    # wget http://ftp.de.debian.org/debian/pool/main/p/python3.9/python3.9-minimal_3.9.2-1_amd64.deb
+
+    # wget http://ftp.de.debian.org/debian/pool/main/p/python3-defaults/python3-minimal_3.9.2-3_amd64.deb
+
+    # wget http://ftp.de.debian.org/debian/pool/main/p/python3-defaults/python3_3.9.2-3_amd64.deb
+
+    # wget http://ftp.de.debian.org/debian/pool/main/p/python3-stdlib-extensions/python3-distutils_3.9.2-1_all.deb
+    # wget http://ftp.de.debian.org/debian/pool/main/w/what-is-python/python-dev-is-python3_3.9.2-1_all.deb
     # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/libpython2.7-minimal_2.7.18-1~20.04.1_amd64.deb
     # wget http://cz.archive.ubuntu.com/ubuntu/pool/main/m/mime-support/mime-support_3.64ubuntu1_all.deb
     # wget http://cz.archive.ubuntu.com/ubuntu/pool/main/r/readline/readline-common_8.0-4_all.deb
@@ -97,29 +67,50 @@ Stage: build
     # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python2.7/python2.7_2.7.18-1~20.04.1_amd64.deb
     # wget http://security.ubuntu.com/ubuntu/pool/universe/p/python-pip/python-pip-whl_20.0.2-5ubuntu1.5_all.deb
 
+    # dpkg -i libc6_2.28-10+deb10u1_amd64.deb
+    # dpkg -i libssl1.1_1.1.1n-0+deb10u1_amd64.deb
+    # dpkg -i libpython3.7-minimal_3.7.3-2+deb10u3_amd64.deb
+    # dpkg -i python3.7-minimal_3.7.3-2+deb10u3_amd64.deb
+    # dpkg -i python3-minimal_3.7.3-1_amd64.deb
+    # dpkg -i libtinfo6_6.1+20181013-2+deb10u2_amd64.deb
+    # dpkg -i libncursesw6_6.1+20181013-2+deb10u2_amd64.deb
+    # dpkg -i libpython3.7-stdlib_3.7.3-2+deb10u3_amd64.deb
+    # dpkg -i python3.7_3.7.3-2+deb10u3_amd64.deb
+    # dpkg -i libpython3-stdlib_3.7.3-1_amd64.deb
+    # dpkg -i python3_3.7.3-1_amd64.deb
+    # dpkg -i python3-lib2to3_3.7.3-1_all.deb
+
+    # dpkg -i libcrypt1_4.4.18-4_amd64.deb
+    
+    # dpkg -i libc6_2.31-13+deb11u3_amd64.deb
+
+    # dpkg -i python3.9-minimal_3.9.2-1_amd64.deb
+
+    # dpkg -i python3-minimal_3.9.2-3_amd64.deb
+
+    # dpkg -i python3_3.9.2-3_amd64.deb
+
+    # dpkg -i python3-distutils_3.9.2-1_all.deb
+    # dpkg -i python-dev-is-python3_3.9.2-1_all.deb
     # dpkg -i libpython2.7-minimal_2.7.18-1~20.04.1_amd64.deb
     # dpkg -i mime-support_3.64ubuntu1_all.deb
     # dpkg -i readline-common_8.0-4_all.deb
     # dpkg -i libreadline8_8.0-4_amd64.deb
     # dpkg -i libpython2.7-stdlib_2.7.18-1~20.04.1_amd64.deb
+
     # dpkg -i python2.7-minimal_2.7.18-1~20.04.1_amd64.deb
+    
     # dpkg -i python2.7_2.7.18-1~20.04.1_amd64.deb
+    
     # dpkg -i python-pip-whl_20.0.2-5ubuntu1.5_all.deb
     
-    # ### Installin pip
+    ### Installin pip
     # cd /opt
     # wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
     # python2.7 get-pip.py
 
-    # ### Installing Python modules
-    # pip install PyYAML==5.4.1
-
-    ### Installing mysql
-    # export DEBIAN_FRONTEND=noninteractive
-    # MYSQL_ROOT_PASSWORD="root"
-    # echo debconf mysql-server/root_password password $MYSQL_ROOT_PASSWORD | debconf-set-selections
-    # echo debconf mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD | debconf-set-selections
-    # apt-get -y install mysql-server
+    ### Installing Python modules
+    pip install PyYAML==5.4.1
 
     ### Installing MySQLdb
     cd /opt
@@ -147,27 +138,27 @@ Stage: build
     # dpkg -i libpython2.7-dev_2.7.18-1~20.04.1_amd64.deb
     # dpkg -i python2.7-dev_2.7.18-1~20.04.1_amd64.deb
 
-    # pip install mysqlclient==1.4.6
+    pip install mysqlclient==1.4.6
 
 
     ## Installing optional dependencies for PASTEC
 
-    # ### Installing BLAST+
+    ### Installing BLAST+
     # cd /opt
-    # wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.13.0/ncbi-blast-2.13.0+-x64-linux.tar.gz
-    # tar -xvf ncbi-blast-2.13.0+-x64-linux.tar.gz
+    wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.13.0/ncbi-blast-2.13.0+-x64-linux.tar.gz
+    tar -xvf ncbi-blast-2.13.0+-x64-linux.tar.gz
 
-    # ### Installing HMMER3
+    ### Installing HMMER3
     # wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/libd/libdivsufsort/libdivsufsort3_2.0.1-4_amd64.deb
     # wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/h/hmmer/hmmer_3.3+dfsg2-1_amd64.deb
     
     # dpkg -i libdivsufsort3_2.0.1-4_amd64.deb
     # dpkg -i hmmer_3.3+dfsg2-1_amd64.deb
 
-    # ### Installing TRF
+    ### Installing TRF
     # cd /opt
-    # wget https://github.com/Benson-Genomics-Lab/TRF/releases/download/v4.09.1/trf409.linux64
-    # chmod +x trf409.linux64
+    wget https://github.com/Benson-Genomics-Lab/TRF/releases/download/v4.09.1/trf409.linux64
+    chmod +x trf409.linux64
 
     ## Downloading Pfam
     # cd /media
@@ -198,13 +189,26 @@ Stage: build
 #TODO
 # README et expliquer comment configurer le fichier .cfg
 %runscript
+    touch /var/lib/mysql/write_test
+    if [ ! -f /var/lib/mysql/write_test ]
+    then
+        echo '/var/lib/mysql is not writable.  Please see https://www.hpc.iastate.edu/guides/containers/mysql-server'
+        echo 'for instructions on bind-mounting host directories into this container.'
+        exit 1
+    fi
+    rm -f /var/lib/mysql/write_test
 
-# usermod -d /mnt/mysql/var/lib/mysql/ mysql
-# chown mysql /mnt/mysql/var/lib/mysql/
-# rm /var/lib/mysql/ib_logfile*
-# apt-get remove mysql-server
-# apt-get purge mysql-server
-# apt-get install mysql-server
+        # Check for initialization
+    if [ ! -d /var/lib/mysql/mysql ]
+    then
+        echo "Initializing mysqld"
+        mysqld --initialize-insecure
+    fi
+
+    # Finally, launch mysqld
+    echo ""
+    echo "Start mysqld"
+    mysqld &
 
 %help
 Singularity container for PASTEC from the REPET package.
