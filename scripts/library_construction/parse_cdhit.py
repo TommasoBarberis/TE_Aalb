@@ -6,8 +6,9 @@ Author: Tommaso Barberis
 Date: 16/03/2022
 
 Description: parse cd-hit-est results. It recovers FASTA sequences used to call cd-hit-est for each cluster. Then it 
-separates singleton clusters in 'singleton.fa' and it calls a consensus for all other clusters using Refiner (from 
-RepeatModeler2). Consensi sequences can founded in 'consensi.fa' and alignements in 'consensi.stk'.
+separates singleton clusters in 'singleton.fa', low copies number families in 'low_copy_number.fa' and it calls a consensus 
+for all other clusters using Refiner (from RepeatModeler2). Consensi sequences can founded in 'consensi.fa' and alignements
+in 'consensi.stk'.
 The 'stats.txt' reports general statitics on clusters.
 
 Warning: temporary file from Refiner are not conserved.
@@ -188,10 +189,12 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
     # counters for statistics
     nb_repr_within_copies = 0
     nb_singleton = 0
+    nb_low_copy = 0
     nb_cluster = 0
 
     # output files
     singleton = out_dir + "/singleton.fa"
+    low_copy = out_dir + "/low_copy_number.fa" # copy number < 5
 
     c = 0 # counter for naming consensus sequences
 
@@ -209,8 +212,21 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
                 nb_singleton += 1                
                 with open(singleton, "a+") as f:                    
                     f.write(">" + header + "\n" + str(seqs_dict[seq_id]) + "\n")
-    
-            else: # the cluster is not singleton
+
+            elif len(cdhit_dict[seq_id]) <= 5: # the cluster is a low copy family
+                
+                seqs_id = cdhit_dict[seq_id]
+                seqs_id.append(seq_id) # add representative sequence
+
+                nb_low_copy += 1
+                
+                with open(low_copy, "a+") as f:
+                    for seq in seqs_id:
+                        f.write(">" + str(seq) + "\n" + seqs_dict[seq] + "\n")
+                    f.write("//\n") # to separate different clusters
+
+
+            else: # the cluster is not singleton or low copy
                 
                 nb_cluster += 1
                 nb_cluster_file +=  1
@@ -225,6 +241,8 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
                     for seq in seqs_id:
                         f.write(">" + "sequence" + str(c) + "\n" + seqs_dict[seq] + "\n")
                         c += 1
+                        if c == 500:
+                            break
                                 
                 if nb_cluster_file == ncpu:
                     do_work(ncpu, out_dir)
@@ -243,7 +261,8 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
         Number of cluster:\t{str(len(cdhit_dict))}
         Number of representative sequences founded in the fasta file with copies:\t{str(nb_repr_within_copies)}
         Number of singleton (clusters with only one sequence):\t{str(nb_singleton)}
-        Number of cluster with two or more sequences:\t{str(nb_cluster)}
+        Number of cluster with a low number of copies (<= 5):\t{str(nb_low_copy)}
+        Number of cluster with 6 or more sequences:\t{str(nb_cluster)}
         """)
     
     # plot_dist(cdhit_dict, out_dir)

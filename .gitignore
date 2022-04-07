@@ -6,6 +6,4 @@ singularity/TE_Aalb.sif
 singularity/PASTEClassifier.cfg
 singularity/my_sbox/
 singularity/PASTEClassifier.py
-singularity/PASTEC/test
-singularity/PASTEC/PASTEC.sif
-singularity/PASTEC/my_sbox/
+singularity/PASTEC/*

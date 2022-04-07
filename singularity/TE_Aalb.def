@@ -6,10 +6,16 @@ Stage: build
 %environment
 
 %post
-    apt-get update && apt-get install -y git
-    cd /opt
-    git clone https://github.com/TommasoBarberis/TE_Aalb.git
+    apt-get update && apt-get install -y \
+    default-jre \
+    default-jdk \
+    wget
 
+    cd /opt
+    wget https://sourceforge.net/projects/popoolation-te2/files/latest/download
+    mv download popte2.jar
+    
+    
 %help
 This container is used to perform TE (transposable elements) insertion calling
 in the Aedes albopictus's 1000 genomes project.
