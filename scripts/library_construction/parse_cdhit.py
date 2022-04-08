@@ -32,10 +32,10 @@ import plotly.express as px
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("-i", metavar='', help=('''
+parser.add_argument("--cdhit", metavar='', help=('''
 cd-hit-est output file.
 '''))
-parser.add_argument("-fasta", metavar='', help=('''
+parser.add_argument("--fasta", metavar='', help=('''
 FASTA file used for the clustering.
 '''))
 parser.add_argument("-o", default = '.', metavar='', help=('''
@@ -46,13 +46,24 @@ parser.add_argument("-t", default='1', metavar='', help=('''
 number of CPUs
 '''
 ))
+parser.add_argument("-n", metavar='', default='10', help=('''
+number of cluster to sample.
+'''))
+parser.add_argument("--min_size", metavar='', default='5', help=('''
+minimum size of the cluster.
+'''))
+parser.add_argument("--max_size", metavar='', default='0', help=('''
+maximum size of the cluster, when equal 0, no limit is set.
+'''))
 
 args = parser.parse_args()
 
 # assign parameters
-cdhit_file = args.i
+cdhit_file = args.cdhit
 copy_file = args.fasta
 out_dir = args.o
+# max_size = args.max_size
+
 
 if out_dir[-1] == "/":
     out_dir = out_dir[:-1]

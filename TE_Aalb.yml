@@ -1,17 +1,17 @@
-name: TE_Aalb
+name: base
 channels:
   - conda-forge
   - bioconda
   - r
   - defaults
 dependencies:
-  - jupyterlab
-  - pandas
-  - biopython
-  - plotly
-  - scipy
-  - ipywidgets[version='>=7.6']
-  - bamnostic
-  - tqdm
-  - python-kaleido
-prefix: /home/lerat/anaconda3/envs/TE_Aalb
+  - conda
+  - python=3.9
+  - conda-env
+  - conda-build
+  - conda-verify
+  - _ipyw_jlab_nb_ext_conf
+  - anaconda==2021.11=py39_0
+  - anaconda-navigator
+  - navigator-updater
+prefix: /home/lerat/anaconda3
