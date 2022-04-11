@@ -47,13 +47,13 @@ number of CPUs
 '''
 ))
 parser.add_argument("-n", metavar='', default='10', help=('''
-number of cluster to sample.
+number of cluster to sample. Ignore this option in parse_cdhit.py script.
 '''))
 parser.add_argument("--min_size", metavar='', default='5', help=('''
-minimum size of the cluster.
+minimum size of the cluster. Ignore this option in parse_cdhit.py script.
 '''))
 parser.add_argument("--max_size", metavar='', default='0', help=('''
-maximum size of the cluster, when equal 0, no limit is set.
+maximum size of the cluster, when equal 0, no limit is set. Ignore this option in parse_cdhit.py script.
 '''))
 
 args = parser.parse_args()
