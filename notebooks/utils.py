@@ -245,7 +245,7 @@ def refiner_table(work_dir):
             for seq_record in SeqIO.parse(cons_file, "fasta"):
                 cons_len = len(seq_record.seq)
                 row.append(cons_len)
-                dist = 1 - lv.ratio(str(seq_500), str(seq_record.seq))
+                dist = lv.distance(str(seq_500), str(seq_record.seq))
                 row.append(dist)
         
         refiner.loc[-1] = row
