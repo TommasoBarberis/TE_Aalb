@@ -6,6 +6,9 @@ from collections import Counter
 import pysam
 import pandas as pd
 import statistics
+from glob import glob
+import re
+import Levenshtein as lv
 
 # parse data
 def cons_parser(cons_file):
@@ -198,41 +201,57 @@ def reads_hist_repBase(samfile, consensi, title):
 
     fig = px.scatter(df, x="length", y="Coverage", color="Annotation", title=title, hover_data=['Name'], marginal_x="histogram")
     fig.show()
-#     data = parse_repbase(consensi)
-#     sam = pysam.AlignmentFile(samfile, "r")
-
-#     df = pd.DataFrame(columns=['Name', 'Coverage', 'length'])
-
-#     mapped_cons = []
-#     for read in sam:
-#         if read.reference_name != None:
-#             mapped_cons.append(read.reference_name)
-#             print(re)
-    
-#     mapped_cons = dict(Counter(mapped_cons))
-    
-#     seq_dict = {}
-#     for row in data:
-#         pass   
 
     
-#     for seq_record in SeqIO.parse(consensi, "fasta"):
-#         name = seq_record.name
-#         seq_len = len(seq_record.seq)
-#         seq_dict[name] = seq_len
-#         try:
-#             annot = name.split("#")[1].split("/")[0]
-#         except:
-#             annot = "MITE"
-#         seq_dict[name] = (annot, seq_len)
+def refiner_table(work_dir):
+    """
+    Parse directory with Refiner benchmark.
+    """
     
-#     check_dict = {}
-#     for cons in mapped_cons.keys():
-#         nb_bases = mapped_cons[cons]*300/seq_dict[cons][1]
-#         if nb_bases <= 2:
-#             check_dict[cons] = nb_bases
-#     check_dict = {}
-#     for cons in mapped_cons.keys():
-#         nb_bases = mapped_cons[cons]*300/seq_dict[cons][1]
-#         if nb_bases <= 2:
-#             check_dict[cons] = nb_bases
+    sampled_clst_dir = sorted(list(glob(work_dir+"/cluster_*", recursive = True)))
+    clst_type = ["100", "150", "200", "250", "300", "350", "400", "450", "500"]
+    info = ["nb_seq", "cons_length", "div"]
+
+    columns = ["cluster"]
+    for t in clst_type:
+        for i in info:
+            columns.append(i + "-" + t)
+
+    refiner = pd.DataFrame(columns=columns)
+    
+    sizes = [100, 150, 200, 250, 300, 350, 400, 450, 500]
+
+    for clst in sampled_clst_dir:
+        row = []
+
+        cluster_name = clst.split("/")[-1]
+        row.append(cluster_name)
+
+        cons_500 = clst + "/cluster-500.clst.fasta.refiner_cons"
+        for seq_record in SeqIO.parse(cons_500, "fasta"):
+            seq_500 = seq_record.seq
+
+        for s in sizes:
+            sample_name = clst + "/cluster-" + str(s) + ".clst.fasta"
+
+            nb_seq = 0
+            with open(sample_name, "r") as f:
+                data = f.read()
+                nb_seq = len(re.findall(r'>', data))
+                row.append(nb_seq)
+
+            cons_file = clst + "/cluster-" + str(s) + ".clst.fasta.refiner_cons"
+
+            for seq_record in SeqIO.parse(cons_file, "fasta"):
+                cons_len = len(seq_record.seq)
+                row.append(cons_len)
+                dist = 1 - lv.ratio(str(seq_500), str(seq_record.seq))
+                row.append(dist)
+        
+        refiner.loc[-1] = row
+        refiner.index = refiner.index + 1
+        refiner = refiner.sort_index()
+
+    refiner = refiner.set_index('cluster')
+    
+    return refiner    
