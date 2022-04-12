@@ -38,8 +38,6 @@ nb_cluster = int(args.n)
 min_size = int(args.min_size)
 max_size = int(args.max_size)
 
-
-
 def filter(cdhit_file, min_size, max_size):
     """
     From a cdhit output file return a dictionary with clusters that have a minimum and a maximum size.
