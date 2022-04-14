@@ -114,65 +114,28 @@ def parse_fasta(fasta):
     return seqs
 
 
-def refiner(cluster_file):
+def refiner(cluster_file, consensi, stk):
     """
     Call Refiner in a subprocess.
     """
     command = ['Refiner', cluster_file] 
     subprocess.run(command)
 
-
-def do_work(ncpu, out_dir):
-    """
-    Recovers all fasta files for cluster present at the moment in the folder and call Refiner command using parallelization.
-    """
-
-    tmp_clst = glob.glob(out_dir + '/*.clst.fasta') # select all fasta files for each cluster present in the directory
-    
-    pool = mp.Pool(ncpu)
-    for clst in tmp_clst:
-        pool.apply_async(refiner, (clst, ))              
-
-    pool.close()
-    pool.join()
-
-    for clst in tmp_clst:
-        os.remove(clst)
-
-
-def update_and_clean(out_dir):
-    """
-    Add new consensi to consensi.fa and consensi.stk and clean temporary files.
-    """
-    # output files
-    consensi = out_dir + "/consensi.fa"
-    stk = out_dir + "/consensi.stk"
-
     # add the sequence to consensi.fa
-    tmp_cons = glob.glob(out_dir + '/*.refiner_cons')
-
     with open(consensi, "a+") as f:
-        for cons_fasta in tmp_cons:
-            with open(cons_fasta, "r") as ref_file:
-                data = ref_file.read()
-                f.write(data)
-            os.remove(cons_fasta)
+        with open(cluster_file + ".refiner_cons", "r") as ref_file:
+            data = ref_file.read()
+            f.write(data)
+        os.remove(cluster_file + ".refiner_cons")
                 
     # add the alignement to consensi.stk
-    tmp_stk = glob.glob(out_dir + '/*.refiner.stk')
-
     with open(stk, "a+") as f:
-        for cons_stk in tmp_stk:
-            with open(cons_stk, "r") as ref_file:
-                data = ref_file.read()
-                f.write(data)
-            os.remove(cons_stk)
-
-    tmp_RM = glob.glob(out_dir + '/RM_*')
-    for rm in tmp_RM:
-        path = os.path.join(out_dir, rm)
-        if os.path.isdir(path):
-            shutil.rmtree(path)
+        with open(cluster_file + ".refiner.stk", "r") as ref_file:
+            data = ref_file.read()
+            f.write(data)
+        os.remove(cluster_file + ".refiner.stk")
+    
+    os.remove(cluster_file)
 
 
 def plot_dist(cdhit_dict, out_dir):
@@ -196,6 +159,8 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
     out_dir: output directory.
     ncpu: number of precessor to use for multiprocessing.
     """
+
+    pool = mp.Pool(ncpu)
     
     # counters for statistics
     nb_repr_within_copies = 0
@@ -206,6 +171,8 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
     # output files
     singleton = out_dir + "/singleton.fa"
     low_copy = out_dir + "/low_copy_number.fa" # copy number < 5
+    consensi = out_dir + "/consensi.fa"
+    stk = out_dir + "/consensi.stk"
 
     c = 0 # counter for naming consensus sequences
 
@@ -253,18 +220,24 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
                         f.write(">" + "sequence" + str(c) + "\n" + seqs_dict[seq] + "\n")
                         c += 1
                         if c == 500:
-                            break
-                                
-                if nb_cluster_file == ncpu:
-                    do_work(ncpu, out_dir)
-                    update_and_clean(out_dir)    
-                    nb_cluster_file = 0                        
+                            break                                
+                
+                # for clst in tmp_clst:
+                pool.apply_async(refiner, (cluster_file, consensi, stk))              
+                    
 
                 c += 1
 
-    if nb_cluster_file != 0:
-        do_work(nb_cluster_file)
-        update_and_clean(out_dir)  
+
+    pool.close()    
+    pool.join()
+
+    tmp_RM = glob.glob('/RM_*')
+    for rm in tmp_RM:
+        path = os.path.join(out_dir, rm)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+
 
     with open(out_dir+"/stats.txt", "w") as stats:
         stats.write(f"""
