@@ -129,7 +129,8 @@ def parse_repbase(filename):
     DNA = ['Mariner/Tc1', 'P', 'DNA', 'hAT', 'Transib', 'piggyBac', 'EnSpm/CACTA', 'Helitron', 'Harbinger', \
         'IKIRARA1', 'Zator', 'VEGE_DW', 'P-element', 'MuDR', 'ISL2EU', 'Sola1', 'Ginger2/TDD', 'Academ', 'Merlin', \
             'PAT', 'Sola3', 'Ginger1', 'Sola2', 'Polinton', 'Kolobok', 'CryptonV',  'Crypton', 'CryptonI', 'IS3EU', \
-        'Dada', 'CryptonA', 'MITE', 'STREPE_PF', 'Chapaev', 'Zisupton']
+        'Dada', 'CryptonA', 'STREPE_PF', 'Chapaev', 'Zisupton']
+    MITE = ['MITE']
     UNKNOWN = ['Transposable', 'TELREP_AG', 'ALAD', 'DMFTZ', 'DMHMR2', 'DEC1_DS', 'DMHETRP', '5S_DM' ,'AY1', \
             'DMHMR1', 'DMFUSHI', 'ISFUN1', 'Nonautonomous', 'SCAR_MA', 'Repetitive', 'SNAPBACK_TC', 'LIRP1', \
             'OFU85403', 'RSAI', 'Interspersed', 'MBOI', 'LGRP1', 'ECORI_Hm', 'CCRP1', 'LDRP1', 'LARP1', 'OVRP1', \
