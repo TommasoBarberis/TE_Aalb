@@ -24,6 +24,7 @@ conda activate TE_Aalb
 """
 
 import argparse, os
+import cmath
 from Bio import SeqIO
 import subprocess, time
 import shutil, glob
@@ -71,7 +72,7 @@ if not os.path.exists(out_dir):
     os.makedirs(out_dir)
 out_dir = os.path.abspath(out_dir)
 
-n_cpus = int(args.t)
+n_cpus = int(args.t) - 1 # because one CPU is needed by the main process
 
 
 def parse_cdhit(cdhit):
@@ -118,7 +119,7 @@ def refiner(cluster_file, consensi, stk):
     """
     Call Refiner in a subprocess.
     """
-    command = ['Refiner', cluster_file] 
+    command = ['Refiner', '-noTmp', cluster_file] 
     subprocess.run(command)
 
     # add the sequence to consensi.fa
@@ -136,6 +137,10 @@ def refiner(cluster_file, consensi, stk):
         os.remove(cluster_file + ".refiner.stk")
     
     os.remove(cluster_file)
+
+    tmp_files = glob.glob(cluster_file.replace(".fasta", "") + "*")
+    for f in tmp_files:
+        os.remove(f)
 
 
 def plot_dist(cdhit_dict, out_dir):
@@ -231,12 +236,6 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
 
     pool.close()    
     pool.join()
-
-    tmp_RM = glob.glob('/RM_*')
-    for rm in tmp_RM:
-        path = os.path.join(out_dir, rm)
-        if os.path.isdir(path):
-            shutil.rmtree(path)
 
 
     with open(out_dir+"/stats.txt", "w") as stats:
