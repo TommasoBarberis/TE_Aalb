@@ -115,10 +115,20 @@ def parse_fasta(fasta):
     return seqs
 
 
-def refiner(cluster_file, consensi, stk):
+def refiner(cluster_file, seqs_id, consensi, stk):
     """
     Call Refiner in a subprocess.
     """
+
+    # write sequences of the cluster in a fasta file
+    with open(cluster_file, "w") as f:
+        c = 0
+        for seq in seqs_id:
+            f.write(">" + "sequence" + str(c) + "\n" + seqs_dict[seq] + "\n")
+            c += 1
+            if c == 500:
+                break                                
+                
     command = ['Refiner', '-noTmp', cluster_file] 
     subprocess.run(command)
 
@@ -218,17 +228,8 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
                 seqs_id = cdhit_dict[seq_id]
                 seqs_id.append(seq_id) # add representative sequence
                 
-                # write sequences of the cluster in a fasta file
-                with open(cluster_file, "w") as f:
-                    c = 0
-                    for seq in seqs_id:
-                        f.write(">" + "sequence" + str(c) + "\n" + seqs_dict[seq] + "\n")
-                        c += 1
-                        if c == 500:
-                            break                                
-                
                 # for clst in tmp_clst:
-                pool.apply_async(refiner, (cluster_file, consensi, stk))              
+                pool.apply_async(refiner, (cluster_file, seqs_id, consensi, stk))              
                     
 
                 c += 1
