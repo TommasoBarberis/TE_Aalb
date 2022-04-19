@@ -24,10 +24,9 @@ conda activate TE_Aalb
 """
 
 import argparse, os
-import cmath
 from Bio import SeqIO
 import subprocess, time
-import shutil, glob
+import glob
 import multiprocessing as mp
 import plotly.express as px
 
@@ -47,6 +46,9 @@ parser.add_argument("-t", default='1', metavar='', help=('''
 number of CPUs
 '''
 ))
+parser.add_argument("--recover_dir", default='False', metavar='', help=('''
+directory with previous results that still contains some cluster files. DEPRECATED
+'''))
 parser.add_argument("-n", metavar='', default='10', help=('''
 number of cluster to sample. Ignore this option in parse_cdhit.py script.
 '''))
@@ -63,6 +65,7 @@ args = parser.parse_args()
 cdhit_file = args.cdhit
 copy_file = args.fasta
 out_dir = args.o
+recover_dir = args.recover_dir
 # max_size = args.max_size
 
 
@@ -115,7 +118,7 @@ def parse_fasta(fasta):
     return seqs
 
 
-def refiner(cluster_file, seqs_id, consensi, stk):
+def refiner(cluster_file, seqs_id, seqs_dict, consensi, stk):
     """
     Call Refiner in a subprocess.
     """
@@ -228,12 +231,9 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
                 seqs_id = cdhit_dict[seq_id]
                 seqs_id.append(seq_id) # add representative sequence
                 
-                # for clst in tmp_clst:
-                pool.apply_async(refiner, (cluster_file, seqs_id, consensi, stk))              
+                pool.apply_async(refiner, (cluster_file, seqs_id, seqs_dict, consensi, stk))
                     
-
                 c += 1
-
 
     pool.close()    
     pool.join()
@@ -251,14 +251,59 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
     
     # plot_dist(cdhit_dict, out_dir)
 
+def refiner_recover(cluster_file, consensi, stk):
+    command = ['Refiner', '-noTmp', cluster_file] 
+    subprocess.run(command)
+        
+    # add the sequence to consensi.fa
+    with open(consensi, "a+") as f:
+        with open(cluster_file + ".refiner_cons", "r") as ref_file:
+            data = ref_file.read()
+            f.write(data)
+        os.remove(cluster_file + ".refiner_cons")
+                
+    # add the alignement to consensi.stk
+    with open(stk, "a+") as f:
+        with open(cluster_file + ".refiner.stk", "r") as ref_file:
+            data = ref_file.read()
+            f.write(data)
+        os.remove(cluster_file + ".refiner.stk")
+    
+    os.remove(cluster_file)
+
+    tmp_files = glob.glob(cluster_file.replace(".fasta", "") + "*")
+    for f in tmp_files:
+        os.remove(f)
+
+
+def recover(recover_dir, nb_cpus):
+    consensi = recover_dir + "/consensi.fa"
+    stk = recover_dir + "/consensi.stk"
+    pool = mp.Pool(nb_cpus)
+
+    clst_lst = glob.glob(recover_dir + "/*.clst.fasta")
+    for clst_file in clst_lst:
+        pool.apply_async(refiner_recover, (clst_file, consensi, stk))
+    
+    pool.close()    
+    pool.join()
 
 
 if __name__ == "__main__":
     start = time.time()
     
-    clusters = parse_cdhit(cdhit_file)
-    seqs = parse_fasta(copy_file)
-    call_consensus(clusters, seqs, out_dir, n_cpus)
+    if recover_dir:
+        if recover_dir[-1] == "/":
+            recover_dir = recover_dir[:-1]
+        if not os.path.exists(recover_dir):
+            os.makedirs(recover_dir)
+            recover_dir = os.path.abspath(recover_dir)
+        
+        recover(recover_dir, n_cpus)
+    else:
+        clusters = parse_cdhit(cdhit_file)
+        seqs = parse_fasta(copy_file)
+        call_consensus(clusters, seqs, out_dir, n_cpus)
     
     end = time.time()
     elapsed = end - start
