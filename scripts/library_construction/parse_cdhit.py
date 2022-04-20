@@ -30,54 +30,6 @@ import glob
 import multiprocessing as mp
 import plotly.express as px
 
-parser = argparse.ArgumentParser()
-
-parser.add_argument("--cdhit", metavar='', help=('''
-cd-hit-est output file.
-'''))
-parser.add_argument("--fasta", metavar='', help=('''
-FASTA file used for the clustering.
-'''))
-parser.add_argument("-o", default = '.', metavar='', help=('''
-output directory for the result file.
-'''
-))
-parser.add_argument("-t", default='1', metavar='', help=('''
-number of CPUs
-'''
-))
-parser.add_argument("--recover_dir", default='False', metavar='', help=('''
-directory with previous results that still contains some cluster files. DEPRECATED
-'''))
-parser.add_argument("-n", metavar='', default='10', help=('''
-number of cluster to sample. Ignore this option in parse_cdhit.py script.
-'''))
-parser.add_argument("--min_size", metavar='', default='5', help=('''
-minimum size of the cluster. Ignore this option in parse_cdhit.py script.
-'''))
-parser.add_argument("--max_size", metavar='', default='0', help=('''
-maximum size of the cluster, when equal 0, no limit is set. Ignore this option in parse_cdhit.py script.
-'''))
-
-args = parser.parse_args()
-
-# assign parameters
-cdhit_file = args.cdhit
-copy_file = args.fasta
-out_dir = args.o
-recover_dir = args.recover_dir
-# max_size = args.max_size
-
-
-if out_dir[-1] == "/":
-    out_dir = out_dir[:-1]
-if not os.path.exists(out_dir):
-    os.makedirs(out_dir)
-out_dir = os.path.abspath(out_dir)
-
-n_cpus = int(args.t) - 1 # because one CPU is needed by the main process
-
-
 def parse_cdhit(cdhit):
     """
     Parse cd-hit-est output file having clusters. It returns a dict where the key is the representative sequence ID of the
@@ -169,7 +121,7 @@ def plot_dist(cdhit_dict, out_dir):
     fig.write_html(out_dir + "/dist.html")
     
 
-def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
+def call_consensus(cdhit_dict, seqs_dict, out_dir, min_size, ncpu):
     """
     It separates singleton clusters in singleton.fa and then it call a consensus for each cluster using Refiner (from 
     RepeatModeler2) in consensi.fa and the alignement at .stk format in consensi.stk.
@@ -209,7 +161,7 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, ncpu):
                 with open(singleton, "a+") as f:                    
                     f.write(">" + header + "\n" + str(seqs_dict[seq_id]) + "\n")
 
-            elif len(cdhit_dict[seq_id]) <= 5: # the cluster is a low copy family
+            elif len(cdhit_dict[seq_id]) <= min_size: # the cluster is a low copy family
                 
                 seqs_id = cdhit_dict[seq_id]
                 seqs_id.append(seq_id) # add representative sequence
@@ -292,6 +244,55 @@ def recover(recover_dir, nb_cpus):
 if __name__ == "__main__":
     start = time.time()
     
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--cdhit", metavar='', help=('''
+    cd-hit-est output file.
+    '''))
+    parser.add_argument("--fasta", metavar='', help=('''
+    FASTA file used for the clustering.
+    '''))
+    parser.add_argument("-o", default = '.', metavar='', help=('''
+    output directory for the result file.
+    '''
+    ))
+    parser.add_argument("-t", default='1', metavar='', help=('''
+    number of CPUs
+    '''
+    ))
+    parser.add_argument("--recover_dir", default='False', metavar='', help=('''
+    directory with previous results that still contains some cluster files. BROKEN OPTION
+    '''))
+    parser.add_argument("--min_size", metavar='', default='5', help=('''
+    minimum size of the cluster. Cluster smaller then the threshold are not computed with Refiner.
+    '''))
+    # parser.add_argument("-n", metavar='', default='10', help=('''
+    # number of cluster to sample. Ignore this option in parse_cdhit.py script.
+    # '''))
+    # parser.add_argument("--max_size", metavar='', default='0', help=('''
+    # maximum size of the cluster, when equal 0, no limit is set. Ignore this option in parse_cdhit.py script.
+    # '''))
+
+    args = parser.parse_args()
+
+    # assign parameters
+    cdhit_file = args.cdhit
+    copy_file = args.fasta
+    out_dir = args.o
+    recover_dir = args.recover_dir
+    min_size = args.min_size
+
+
+    if out_dir[-1] == "/":
+        out_dir = out_dir[:-1]
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    out_dir = os.path.abspath(out_dir)
+
+    n_cpus = int(args.t)
+
+    print(min_size)
+
     if recover_dir:
         if recover_dir[-1] == "/":
             recover_dir = recover_dir[:-1]
@@ -303,7 +304,7 @@ if __name__ == "__main__":
     else:
         clusters = parse_cdhit(cdhit_file)
         seqs = parse_fasta(copy_file)
-        call_consensus(clusters, seqs, out_dir, n_cpus)
+        call_consensus(clusters, seqs, out_dir, min_size, n_cpus)
     
     end = time.time()
     elapsed = end - start
