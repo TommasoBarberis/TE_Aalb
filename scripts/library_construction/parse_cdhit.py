@@ -260,7 +260,7 @@ if __name__ == "__main__":
     number of CPUs
     '''
     ))
-    parser.add_argument("--recover_dir", default='False', metavar='', help=('''
+    parser.add_argument("--recover_dir", default=False, metavar='', help=('''
     directory with previous results that still contains some cluster files. BROKEN OPTION
     '''))
     parser.add_argument("--min_size", metavar='', default='5', help=('''
@@ -280,8 +280,7 @@ if __name__ == "__main__":
     copy_file = args.fasta
     out_dir = args.o
     recover_dir = args.recover_dir
-    min_size = args.min_size
-
+    min_size = int(args.min_size)
 
     if out_dir[-1] == "/":
         out_dir = out_dir[:-1]
@@ -290,9 +289,7 @@ if __name__ == "__main__":
     out_dir = os.path.abspath(out_dir)
 
     n_cpus = int(args.t)
-
-    print(min_size)
-
+    
     if recover_dir:
         if recover_dir[-1] == "/":
             recover_dir = recover_dir[:-1]
