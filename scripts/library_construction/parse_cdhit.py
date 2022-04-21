@@ -161,7 +161,7 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, min_size, ncpu):
                 with open(singleton, "a+") as f:                    
                     f.write(">" + header + "\n" + str(seqs_dict[seq_id]) + "\n")
 
-            elif len(cdhit_dict[seq_id]) <= min_size: # the cluster is a low copy family
+            elif len(cdhit_dict[seq_id]) < min_size: # the cluster is a low copy family, minus one to take in account the representative sequence (key of the dict)
                 
                 seqs_id = cdhit_dict[seq_id]
                 seqs_id.append(seq_id) # add representative sequence
