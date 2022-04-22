@@ -7,3 +7,4 @@ singularity/PASTEClassifier.cfg
 singularity/my_sbox/
 singularity/PASTEClassifier.py
 singularity/PASTEC/*
+notebooks/assets/img

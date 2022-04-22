@@ -1,0 +1,53 @@
+#tabs {
+    float: left;
+}
+
+#tabs-content-example-graph {
+    /* position: relative; */
+    float: right;
+    justify-content: center;
+    width: 80%;
+    
+}
+
+.tab {
+    font-family: sans-serif;
+}
+
+#tab_title {
+    margin-left: auto;
+    margin-right: auto;
+    color: rgb(55, 55, 218);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.old_cons {
+    color: rgb(55, 55, 218);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+#seq {
+    font-size: 7;
+    text-align: justify; /* For Edge */
+    -moz-text-align-last: justify; /* For Firefox prior 58.0 */
+    text-align-last: justify;
+    word-break: break-all; 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.info {
+    font-weight: bold;
+}
+
+.ali {
+    width: 100%;
+}
+
+.pdf_viewer {
+    width: 100%;
+    height: 1000px;
+}
+
+p {
+    font-family: sans-serif;
+}
