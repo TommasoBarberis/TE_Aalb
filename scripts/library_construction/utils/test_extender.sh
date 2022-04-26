@@ -7,13 +7,15 @@
 # $1: fasta file with consensi 
 # $2: ref genome
 # $3: cpus
+# $4: dir with parse_distmat.py
 
 # dependancies:
 # -mafft
 # -scripts from https://github.com/annaprotasio/TE_ManAnnot/blob/main/bin
 
-source ~/anaconda3/etc/profile.d/conda.sh
-conda activate TE_Aalb
+
+# source ~/anaconda3/etc/profile.d/conda.sh
+# conda activate TE_Aalb
 export fasta_file=$(realpath $1)
 
 work_dir=$(realpath .)
@@ -47,15 +49,20 @@ for dir in $(ls -d -1 $work_dir/seq_*); do
     
     echo -e "\n CIAlign stuff \n\n"
     CIAlign --infile maf.fa --outfile_stem no_clean --make_consensus --plot_output --plot_format svg
-    CIAlign --infile maf.fa --outfile_stem no_ins --remove_insertions --make_consensus --plot_output --plot_format svg
+    CIAlign --infile maf.fa --outfile_stem no_ins --remove_insertions --insertion_max_size 400 --crop_ends --make_consensus --plot_output --plot_format svg
 
-done
+    # distance matrix
+    distmat maf.fa -nucmethod 2 -outfile maf.distmat 
+    distmat no_clean_cleaned.fasta -nucmethod 2 -outfile no_clean.distmat
+    distmat no_ins_cleaned.fasta -nucmethod 2 -outfile no_ins.distmat
 
-conda activate te_aid
+    python3 $4/parse_distmat.py -m maf.distmat > log.txt
+    python3 $4/parse_distmat.py -m no_clean.distmat >> log.txt
+    python3 $4/parse_distmat.py -m no_ins.distmat >> log.txt
 
-for dir in $(ls -d -1 $work_dir/seq_*); do
-    cd $(realpath $dir)
+    # TE-Aid
     TE-Aid -g $genome_file -q seq.fasta
     TE-Aid -g $genome_file -q no_clean_consensus.fasta
     TE-Aid -g $genome_file -q no_ins_consensus.fasta
+
 done
