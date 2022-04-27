@@ -21,6 +21,11 @@ To update it:
 conda env update --file TE_Aalb.yml --prune
 ```
 
+Add the conda env to the jupyter notebook kernels:
+```
+python -m ipykernel install --user --name=TE_Aalb
+```
+
 ## Organization of the repository
 
 - `misc/`: old scripts and other stuff;
