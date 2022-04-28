@@ -40,8 +40,8 @@ for dir in $(ls -d -1 $work_dir/seq_*); do
     cd $(realpath $dir)
     make_fasta_from_blast.sh $genome_file seq.fasta 80 1500
     nb_seq=$(grep -c ">" seq.fasta.blast.bed.fa)
-    if [ $nb_seq -gt 200 ]; then
-        ready_for_MSA.sh seq.fasta.blast.bed.fa 200 50
+    if [ $nb_seq -gt 100 ]; then
+        ready_for_MSA.sh seq.fasta.blast.bed.fa 100 25
         mafft --reorder --thread $3 seq.fasta.blast.bed.fa.rdmSubset.fa > maf.fa
     else
         mafft --reorder --thread $3 seq.fasta.blast.bed.fa > maf.fa
