@@ -1,0 +1,297 @@
+#!/bin/bash
+
+# Author: Tommaso Barberis
+# Date: 27/04/2022
+# Description: extension of consensi of transposable elements
+# TODOs:
+#   - link to the github repo in full documentation
+
+# dependancies:
+# - mafft
+# - blastn
+# - samtools
+# - awk
+# - bedtools
+# - CIAlign
+
+# sources:
+# https://github.com/annaprotasio/TE_ManAnnot
+
+function usage()
+{
+   cat << DOC
+
+    developer: tommasobarberis98@gmail.com
+
+   #######################################
+
+   Extender is a tool to refine and extend transposable elements. It inputs a TE consenus
+   sequence and a reference genome at the fasta format.
+
+   Full Documentation: link repo github
+                                      
+   #######################################
+
+   Usage: extender [-i|--input <seq_TE.fasta>] [-g|--genome <genome.fasta>] [options]
+
+   mendatory arguments:
+    
+    -i, --input                     TE consensus (fasta file)
+    -g, --genome                    Reference genome (fasta file)
+
+   optional arguments:
+    
+    -h, --help                      Show this help message and exit
+    -t, --threads                   Number of threads, (default: 1)
+    -o, --output                    Output directory (default: directory where the program is launched)
+    -min, --min_length              Minmum length for instances that will be recovered in the genome 
+                                    (default: 0). If the option is set to 0 (as default), the program
+                                    will use the half of the length of the TE as minimum length, else
+                                    it will use the provided value
+    -f, --flank                     Number of bases to extract at the flanking regions of the hits 
+                                    (default: 1000)       
+    -e, --evalue                    e-value for blastn (default: 1e-20)
+    -l, --limit                     Maximum number of hits to take in account for the alignement 
+                                    (default: 100). If the number of hits is less then this limit, the
+                                    subsample is skipped.
+    -k, --keep_longest              Keep the k% longest sequences among blast hits (default: 0.25)                                    
+    -ins, --max_ins_size            Remove insertion if its size is less than <ins> (default:1000, 
+                                    range:[200-1000]) 
+
+    #######################################
+
+    Dependancies:
+        - mafft
+        - blastn
+        - samtools
+        - awk
+        - bedtools
+        - CIAlign
+
+
+
+DOC
+} 
+
+# if no parameter given, output help and qui
+if [[ $# -eq 0 ]] ; then
+    usage
+    echo '   ##################################'
+    echo '   ERROR! No mendatory argument given'
+    echo '   ##################################'
+    exit 0
+fi
+
+# defaults parameters
+THREADS=1
+OUTPUTDIR=./
+MIN_LENGTH=0
+FLANK=1000
+EVALUE=1e-20
+LIMIT=100
+KEEP=0.25
+INS_MAX_SIZE=1000
+
+# parse of parameteres
+ARGS=""
+re='^[0-9]+$'
+
+while [[ $# -gt 0 ]]; do
+	case $1 in
+		-i|--input)
+            FASTAFILE=$2
+            shift 2
+            ;;
+		-g|--genome)
+			GENOME=$2
+			shift 2
+			;;
+        -h | --help)
+	        usage
+	        exit 1
+	        ;;
+        -t|--threads)
+			THREADS=$2            
+            if ! [[ $THREADS =~ $re ]] ; then
+                echo "  ERROR! Invalid value for the number of threads." 
+                exit 1
+            fi
+			shift 2
+			;;
+        -o|--output)
+			OUTPUTDIR=$2
+            shift 2
+			;;
+        -min|--min_length)
+            MIN_LENGTH=$2
+            if ! [[ $MIN_LENGTH =~ $re ]] ; then
+                usage
+                echo "  ERROR! Invalid value for the minimum length of the instances." 
+                exit 1
+            fi
+            shift 2
+            ;;
+        -f|--flank)
+            FLANK=$2
+            if ! [[ $MIN_LENGTH =~ $re ]] ; then
+                usage
+                echo "  ERROR! Invalid value for the number of bases in the flanking regions." 
+                exit 1
+            fi
+            shift 2
+            ;;
+        -e|--evalue)
+            EVALUE=$2
+            shift 2
+            ;;
+        -l|--limit)
+            LIMIT=$2
+            if ! [[ $LIMIT =~ $re ]] ; then
+                usage
+                echo "  ERROR! Invalid value for the maximum number of hits." 
+                exit 1
+            fi
+            shift 2
+            ;;
+        -k|--keep_longest)
+            KEEP=$2
+            if (( $(echo "$KEEP > 1" |bc -l) )) || (( $(echo "$KEEP < 0" |bc -l) )); then
+                usage
+                echo "  ERROR! Invalid value for the pourcentage of longest hits to keep." 
+                exit 1
+            fi
+            shift 2
+            ;;
+        -ins|--max_ins_size)
+            INS_MAX_SIZE=$2
+            if (( $(echo "$INS_MAX_SIZE > 1000" |bc -l) )) || (( $(echo "$INS_MAX_SIZE < 200" |bc -l) )); then
+                usage
+                echo "  ERROR! Invalid value for the pourcentage of longest hits to keep." 
+                exit 1
+            fi
+            shift 2
+            ;;
+		-*|--*)
+			echo "Unknown option $1"
+			exit 1
+			;;
+		*)
+			ARGS+=("$1")
+			shift
+			;;
+	esac
+done
+
+# check for mandatory arguments
+FASTAFILE=$(realpath $FASTAFILE 2> /dev/null) || {
+    usage; 
+    echo "  ERROR! No TE fasta file found.";
+    exit 1; 
+}
+GENOME=$(realpath $GENOME 2> /dev/null) || { 
+    usage; 
+    echo "  ERROR! No genome found.";
+    exit 1; 
+}
+OUTPUTDIR=$(realpath $OUTPUTDIR 2> /dev/null) || {
+    usage;
+    echo "  ERROR! Invalid output directory.";
+    exit 1;
+}
+
+
+#####################################################
+
+## Make a fasta file with instance of the TE in the genome with the flanking regions
+# https://github.com/annaprotasio/TE_ManAnnot/blob/main/bin/make_fasta_from_blast.sh
+
+# look for blast database, if not found, make it
+nin_file=$GENOME.nin
+if [ ! -f "$nin_file" ]; then
+    echo -e "\n\nBlast database for the genome doesn't exist. Running makeblastdb, this can take some time\n\n"
+    makeblastdb -in $GENOME -dbtype nucl
+    echo -e "\n\n"
+fi
+
+# look for genome.fasta.length file, if not found, make it
+length_file=$GENOME.length
+if [ ! -f "$length_file" ]; then
+    echo -e "\n\nFile with genome lengths not found. Making it now, this can take some time"
+    samtools faidx $GENOME
+    awk '{OFS="\t"; print $1,$2}' < $GENOME.fai > $GENOME.length
+	echo -e "\n\n"
+fi
+
+
+# if the value 0 is entered as min_length by the user, redifine min_length as half the length of fasta sequence
+if [ $MIN_LENGTH == 0 ]; then 
+	MIN_LENGTH=`grep -v ">" $FASTAFILE | wc | awk '{print $3/2}'`
+fi
+
+echo -e "\n\n"
+echo -e "Query sequence:\t" `basename $FASTAFILE`
+echo -e "Minimum length of blast hit:\t" $MIN_LENGTH
+echo -e "the hit locus will be extended:\t" = $FLANK "bases in each direction"
+echo -e "\n\n"
+
+prefix=$OUTPUTDIR/`basename $FASTAFILE`
+
+# run blast
+echo "#qseqid sseqid pident length mismatch qstart qend sstart send sstrand" > $prefix.blast.o
+blastn -query $FASTAFILE -db $GENOME -outfmt "6 qseqid sseqid pident length mismatch qstart qend sstart send sstrand" -evalue $EVALUE | awk -v "ml=$MIN_LENGTH" '{OFS="\t"; if ($4 > ml) {print $0}}' >> $prefix.blast.o
+
+# parse blast result into a bed file
+awk '{OFS="\t"; if ($1~/^#/) {} else { if ($10~/plus/) {print $2, $8, $9, $1, $3, "+"} else {print $2, $9, $8, $1, $3, "-"}}}' < $prefix.blast.o > $prefix.blast.bed
+
+# extend boundaries "flank" bases up and down of the blast hit locations
+bedtools slop -s  -i $prefix.blast.bed  -g $GENOME.length -b $FLANK > $prefix.blast.flank.bed
+
+# extract fasta sequence from the reference genome
+bedtools getfasta -fi  $GENOME -fo $prefix.blast.bed.fa  -bed $prefix.blast.flank.bed -s 
+
+# how many sequences ended up in the multi fasta 
+fasta_count=`grep -c ">" $prefix.blast.bed.fa`
+
+echo "The fasta file with blast hits has "$fasta_count "sequences"
+
+# remove redundant files
+rm $prefix.blast.o $prefix.blast.bed $prefix.blast.flank.bed
+
+
+## if $prefix.blast.flank.bed has to many sequences, it subsamples them
+# https://github.com/annaprotasio/TE_ManAnnot/blob/main/bin/ready_for_MSA.sh
+
+hits_fasta=$prefix.blast.bed.fa
+
+if [ $fasta_count -gt $LIMIT ]; then
+    
+    echo -e "\tSumbsampling blast hits"
+
+    largest_number=$(echo "$LIMIT * $KEEP" | bc -l)
+    largest_number=${largest_number%.*}
+    randomly_selected_number=$(($LIMIT - $largest_number))
+
+    samtools faidx $hits_fasta
+
+    sort -nk 2 -r $hits_fasta.fai > $hits_fasta.fai.sortedbylength
+    # get $KEEP % of largest sequences
+    head -$largest_number $hits_fasta.fai.sortedbylength | awk '{print $1}' >> $hits_fasta.headers 
+    awk "NR> $largest_number {print}" < $hits_fasta.fai.sortedbylength > $hits_fasta.temp 
+    # add random hits
+    sort -R $hits_fasta.temp | head -$randomly_selected_number | awk '{print $1}' >> $hits_fasta.headers
+    
+    grep -A 1 -f $hits_fasta.headers $hits_fasta | sed '/^--/d' > $hits_fasta.rdmSubset.fa 
+    # awk 'FNR==NR{a[$1]=$2;next} {print $1,a[$1]}' $hits_fasta.fai $hits_fasta.headers | sort -nk 2 -r >> $hits_fasta.rdmSubset.len
+    
+    rm $hits_fasta.fai.sortedbylength $hits_fasta.headers $hits_fasta.temp $hits_fasta.fai
+    mv $hits_fasta.rdmSubset.fa $hits_fasta
+fi
+
+## Alignement 
+echo -e "\tMultiple alignement of sequences using MAFFT"
+
+mafft --reorder --thread $THREADS $hits_fasta > $OUTPUTDIR/maf.fa
+
+## Cleaning the alignement
+echo -e "\tCleaning the alignement using CIAlign"
+CIAlign --infile maf.fa --outfile_stem $OUTPUTDIR/cialign --remove_insertions --insertion_max_size $INS_MAX_SIZE --crop_ends --make_consensus --plot_output --plot_format svg
