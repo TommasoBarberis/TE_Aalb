@@ -7,6 +7,9 @@
 #   - link to the github repo in full documentation
 #   - option to plot alignement from CIAlign
 #   - test for installed dependancies
+#   - add user parameter min coverage
+#   - verify integrity for low coverage sequence (TAG: low_0000)
+#   - handle error from CIAlign when few sequences are provided in the MSA
 
 # dependancies:
 # - mafft
@@ -15,7 +18,7 @@
 # - awk
 # - bedtools
 # - CIAlign
-# - python
+# - python3
 # - R
 
 # sources:
@@ -96,6 +99,7 @@ EVALUE=1e-20
 LIMIT=100
 KEEP=0.25
 INS_MAX_SIZE=1000
+MIN_COVERAGE=1
 
 # parse of parameteres
 ARGS=""
@@ -334,7 +338,7 @@ function run_cialign() {
     rm $2_log.txt $2_with_consensus.fasta $2_cleaned.fasta $2_removed.txt
 }
 
-run_cialign $prefix.blast.bed.fa.maf $OUTPUTDIR/cialign $INS_MAX_SIZE
+run_cialign $prefix.blast.bed.fa.maf $OUTPUTDIR/cialign $INS_MAX_SIZE 
 
 #####################################################
 
@@ -353,7 +357,7 @@ Rscript $scriptdir/utils/query_coverage.R $prefix.new.blast.o $new_cons_len $OUT
 covered_size=$(grep -v "^0" $OUTPUTDIR/new_coverage.txt | wc -l)
 
 if [[ $covered_size -gt $seq_len ]]; then
-    new_flank=$(echo "($covered_size - $seq_len)/2" |bc -l)
+    new_flank=$(echo "($covered_size - $seq_len)/2" | bc -l)
     new_flank=${new_flank%.*}
 
     get_blast_hit $prefix.new_flank $FASTAFILE $GENOME $EVALUE $MIN_LENGTH $new_flank
@@ -361,6 +365,52 @@ if [[ $covered_size -gt $seq_len ]]; then
 
     run_mafft $THREADS $prefix.new_flank.blast.bed.fa $OUTPUTDIR
     run_cialign $prefix.new_flank.blast.bed.fa.maf $OUTPUTDIR/cialign_rnd2 $INS_MAX_SIZE
-else    
-    true
+
+    mv cialign_rnd2_consensus.fasta $OUTPUTDIR/new_sequence.fasta
+else
+    #TAG: low_0000 
+
+    # count number of 0 at the begin
+    trim_begin=0
+    trim_end=0
+
+    function trimmer() {
+python3 - << END
+with open("$1", "r") as f:
+    data = f.readlines()
+    bool=$2
+
+    def counter(lst):
+        c = 0
+        for line in lst:
+            val = int(line.replace("\n", ""))
+            if val > $3:
+                break
+            c += 1 
+        print(c)
+
+    if bool:
+        counter(data)
+    else:
+        data.reverse()
+        counter(data)
+END
+    }
+
+    trim_begin=$(trimmer $OUTPUTDIR/seq_coverage.txt True $MIN_COVERAGE >&1)
+    trim_end=$(trimmer $OUTPUTDIR/seq_coverage.txt False $MIN_COVERAGE >&1)
+
+    head -1 $FASTAFILE > $OUTPUTDIR/new_sequence.fasta
+    seq=$(tail -1 $FASTAFILE)
+    if [ $trim_begin -ne 0 ]; then
+        seq=${seq:trim_begin}
+    fi
+    if [ $trim_end -ne 0 ]; then
+        seq=${seq::-trim_end}
+    fi
+
+    echo $seq >> $OUTPUTDIR/new_sequence.fasta
+
 fi
+
+rm $OUTPUTDIR/new_coverage.txt $OUTPUTDIR/seq* $OUTPUTDIR/cialign* 
