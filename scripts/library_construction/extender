@@ -5,6 +5,8 @@
 # Description: extension of consensi of transposable elements
 # TODOs:
 #   - link to the github repo in full documentation
+#   - option to plot alignement from CIAlign
+#   - test for installed dependancies
 
 # dependancies:
 # - mafft
@@ -13,9 +15,12 @@
 # - awk
 # - bedtools
 # - CIAlign
+# - python
+# - R
 
 # sources:
 # https://github.com/annaprotasio/TE_ManAnnot
+# https://github.com/clemgoub/TE-Aid
 
 function usage()
 {
@@ -182,6 +187,8 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
+#####################################################
+
 # check for mandatory arguments
 FASTAFILE=$(realpath $FASTAFILE 2> /dev/null) || {
     usage; 
@@ -199,6 +206,10 @@ OUTPUTDIR=$(realpath $OUTPUTDIR 2> /dev/null) || {
     exit 1;
 }
 
+#####################################################
+
+# global variables
+scriptdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 #####################################################
 
@@ -255,8 +266,10 @@ fasta_count=`grep -c ">" $prefix.blast.bed.fa`
 echo "The fasta file with blast hits has "$fasta_count "sequences"
 
 # remove redundant files
-rm $prefix.blast.o $prefix.blast.bed $prefix.blast.flank.bed
+rm $prefix.blast.bed $prefix.blast.flank.bed #$prefix.blast.o
 
+
+#####################################################
 
 ## if $prefix.blast.flank.bed has to many sequences, it subsamples them
 # https://github.com/annaprotasio/TE_ManAnnot/blob/main/bin/ready_for_MSA.sh
@@ -281,17 +294,29 @@ if [ $fasta_count -gt $LIMIT ]; then
     sort -R $hits_fasta.temp | head -$randomly_selected_number | awk '{print $1}' >> $hits_fasta.headers
     
     grep -A 1 -f $hits_fasta.headers $hits_fasta | sed '/^--/d' > $hits_fasta.rdmSubset.fa 
-    # awk 'FNR==NR{a[$1]=$2;next} {print $1,a[$1]}' $hits_fasta.fai $hits_fasta.headers | sort -nk 2 -r >> $hits_fasta.rdmSubset.len
     
     rm $hits_fasta.fai.sortedbylength $hits_fasta.headers $hits_fasta.temp $hits_fasta.fai
     mv $hits_fasta.rdmSubset.fa $hits_fasta
 fi
 
+
+#####################################################
+
 ## Alignement 
 echo -e "\tMultiple alignement of sequences using MAFFT"
-
 mafft --reorder --thread $THREADS $hits_fasta > $OUTPUTDIR/maf.fa
+
+
+#####################################################
 
 ## Cleaning the alignement
 echo -e "\tCleaning the alignement using CIAlign"
-CIAlign --infile maf.fa --outfile_stem $OUTPUTDIR/cialign --remove_insertions --insertion_max_size $INS_MAX_SIZE --crop_ends --make_consensus --plot_output --plot_format svg
+CIAlign --infile maf.fa --outfile_stem $OUTPUTDIR/cialign --remove_insertions --insertion_max_size $INS_MAX_SIZE --crop_ends --make_consensus 
+    #--plot_output --plot_format svg
+
+
+#####################################################
+
+## query coverage
+cons_len=$(awk 'BEGIN {OFS = "\n"}; /^>/ {print(substr(sequence_id, 2)" "sequence_length); sequence_length = 0; sequence_id = $0}; /^[^>]/ {sequence_length += length($0)}; END {print(substr(sequence_id, 2)" "sequence_length)}' $FASTAFILE | awk 'NR > 1 {print $NF}')
+Rscript $scriptdir/utils/consensus2genome.R $prefix.blast.o $cons_len $OUTPUTDIR/coverage.txt
