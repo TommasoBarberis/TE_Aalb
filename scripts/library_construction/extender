@@ -9,7 +9,7 @@
 #   - test for installed dependancies
 #   - add user parameter min coverage
 #   - verify integrity for low coverage sequence (TAG: low_0000)
-#   - handle error from CIAlign when few sequences are provided in the MSA
+#   - add speed/quality tuning option (?)
 
 # dependancies:
 # - mafft
@@ -274,12 +274,23 @@ function get_blast_hit()
     echo "The fasta file with blast hits has "$fasta_count "sequences"
 
     # remove redundant files
-    rm $1.blast.bed $1.blast.flank.bed #$prefix.blast.o
+    rm $1.blast.bed $1.blast.flank.bed
 
 }
 
 get_blast_hit $prefix $FASTAFILE $GENOME $EVALUE $MIN_LENGTH $FLANK $FLANK
 
+
+#####################################################
+
+## Check for a minimal number of sequences
+
+if [ $(grep -c ">" $prefix.blast.bed.fa) -lt 3 ]; then
+    echo -e "\n\tNot enough blast hit to extend/trim the consensus"
+    cp $FASTAFILE $OUTPUTDIR/new_consensus.fasta
+    rm $OUTPUTDIR/seq.fasta.blast.* &> /dev/null
+    exit 0
+fi
 
 #####################################################
 
@@ -298,7 +309,15 @@ function resize_cluster() {
         largest_number=${largest_number%.*}
         randomly_selected_number=$(($2 - $largest_number))
 
-        samtools faidx $1
+        samtools faidx $1 2> $OUTPUTDIR/log
+
+        ## Check if sequence is a potential simple repeats
+        if [ -f $OUTPUTDIR/log ] && [[ $(head -1 $OUTPUTDIR/log) == *"Ignoring duplicate sequence"* ]]; then
+            echo -e "\n\tThe sequence is hypothetically a simple repeat"
+            rm $OUTPUTDIR/seq.fasta.blast.* $OUTPUTDIR/log &> /dev/null
+            cp $FASTAFILE $OUTPUTDIR/simple_repeat.fasta
+            exit 0
+        fi
 
         sort -nk 2 -r $1.fai > $1.fai.sortedbylength
         # get $KEEP % of largest sequences
@@ -327,6 +346,7 @@ function run_mafft() {
 
 run_mafft $THREADS $prefix.blast.bed.fa
 
+
 #####################################################
 
 ## Cleaning the alignement
@@ -341,25 +361,10 @@ function run_cialign() {
 
 run_cialign $prefix.blast.bed.fa.maf $OUTPUTDIR/cialign $INS_MAX_SIZE 
 
-#####################################################
-
-## query coverage - clean this?
-# seq_len=$(awk 'BEGIN {OFS = "\n"}; /^>/ {print(substr(sequence_id, 2)" "sequence_length); sequence_length = 0; sequence_id = $0}; /^[^>]/ {sequence_length += length($0)}; END {print(substr(sequence_id, 2)" "sequence_length)}' $FASTAFILE | awk 'NR > 1 {print $NF}')
-# Rscript $scriptdir/utils/query_coverage.R $prefix.blast.o $seq_len $OUTPUTDIR/seq_coverage.txt
-
-## new consensus coverage
-# blastn -query $OUTPUTDIR/cialign_consensus.fasta -db $GENOME -outfmt "6 qseqid sseqid pident length mismatch qstart qend sstart send sstrand" -evalue $EVALUE | awk -v "ml=$MIN_LENGTH" '{OFS="\t"; if ($4 > ml) {print $0}}' >> $prefix.new.blast.o
-# new_cons_len=$(awk 'BEGIN {OFS = "\n"}; /^>/ {print(substr(sequence_id, 2)" "sequence_length); sequence_length = 0; sequence_id = $0}; /^[^>]/ {sequence_length += length($0)}; END {print(substr(sequence_id, 2)" "sequence_length)}' $OUTPUTDIR/cialign_consensus.fasta | awk 'NR > 1 {print $NF}')
-# Rscript $scriptdir/utils/query_coverage.R $prefix.new.blast.o $new_cons_len $OUTPUTDIR/new_coverage.txt
-
-cp $FASTAFILE $OUTPUTDIR/old_consensus.fasta
-mv $OUTPUTDIR/cialign_consensus.fasta $OUTPUTDIR/new_consensus.fasta
-
 
 #####################################################
 
-# Main loop
-
+## Some functions
 
 function levenshtein_distance {
     # $1: old consensus
@@ -399,6 +404,14 @@ with open("$1", "r") as f:
 END
 }
 
+
+#####################################################
+
+## Main loop
+
+cp $FASTAFILE $OUTPUTDIR/old_consensus.fasta
+mv $OUTPUTDIR/cialign_consensus.fasta $OUTPUTDIR/new_consensus.fasta
+
 while true; do
     
     ## compute distance between two consensi
@@ -417,7 +430,7 @@ while true; do
     excess_5=$(end_excess $OUTPUTDIR/coverage.txt True $MIN_COVERAGE >&1)
     excess_3=$(end_excess $OUTPUTDIR/coverage.txt False $MIN_COVERAGE >&1)
 
-    if (( $(echo "$dist < 0.5" |bc -l) )) && [ $excess_5 -lt 50 ] && [ $excess_3 -lt 50 ]; then
+    if (( $(echo "$dist < 0.3" |bc -l) )) && [ $excess_5 -lt 20 ] && [ $excess_3 -lt 20 ]; then
         # consensi are pretty similar
         rm $OUTPUTDIR/old_consensus.fasta &> /dev/null
         break
@@ -472,55 +485,6 @@ while true; do
         rm $OUTPUTDIR/seq* $OUTPUTDIR/cialign*  $OUTPUTDIR/coverage.txt &> /dev/null
     fi
 
-
 done
 
 rm $OUTPUTDIR/coverage.txt $OUTPUTDIR/seq.fasta.* &> /dev/null
-exit 0
-
-#####################################################
-
-## DEVELOP FRAME
-
-## recompute flanking region
-# covered_size=$(grep -v "^0" $OUTPUTDIR/new_coverage.txt | wc -l)
-
-if [[ $covered_size -gt $seq_len ]]; then
-    new_flank=$(echo "($covered_size - $seq_len)/2" | bc -l)
-    new_flank=${new_flank%.*}
-
-    get_blast_hit $prefix.new_flank $FASTAFILE $GENOME $EVALUE $MIN_LENGTH $new_flank
-    resize_cluster $prefix.new_flank.blast.bed.fa $LIMIT $KEEP
-
-    run_mafft $THREADS $prefix.new_flank.blast.bed.fa $OUTPUTDIR
-    run_cialign $prefix.new_flank.blast.bed.fa.maf $OUTPUTDIR/cialign_rnd2 $INS_MAX_SIZE
-
-    mv cialign_rnd2_consensus.fasta $OUTPUTDIR/new_sequence.fasta
-
-    echo -e "\n\tThe sequence is realigned with new flanking regions of $new_flank bp"
-else
-    #TAG: low_0000 
-
-    # count number of 0 at the begin
-    trim_begin=0
-    trim_end=0
-
-
-    trim_begin=$(trimmer $OUTPUTDIR/seq_coverage.txt True $MIN_COVERAGE >&1)
-    trim_end=$(trimmer $OUTPUTDIR/seq_coverage.txt False $MIN_COVERAGE >&1)
-
-    head -1 $FASTAFILE > $OUTPUTDIR/new_sequence.fasta
-    seq=$(tail -1 $FASTAFILE)
-    if [ $trim_begin -ne 0 ]; then
-        seq=${seq:trim_begin}
-    fi
-    if [ $trim_end -ne 0 ]; then
-        seq=${seq::-trim_end}
-    fi
-
-    echo $seq >> $OUTPUTDIR/new_sequence.fasta
-
-    echo -e "\n\tThe sequence is trimmed of $trim_begin bp in 5' and of $trim_end in 3'"
-fi
-
-rm $OUTPUTDIR/seq* #$OUTPUTDIR/cialign*  #$OUTPUTDIR/new_coverage.txt
