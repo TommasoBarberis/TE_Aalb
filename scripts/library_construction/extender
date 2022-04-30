@@ -287,7 +287,7 @@ get_blast_hit $prefix $FASTAFILE $GENOME $EVALUE $MIN_LENGTH $FLANK $FLANK
 
 if [ $(grep -c ">" $prefix.blast.bed.fa) -lt 3 ]; then
     echo -e "\n\tNot enough blast hit to extend/trim the consensus"
-    cp $FASTAFILE $OUTPUTDIR/new_consensus.fasta
+    mv $FASTAFILE $OUTPUTDIR/new_consensus.fasta
     rm $OUTPUTDIR/seq.fasta.blast.* &> /dev/null
     exit 0
 fi
@@ -315,7 +315,7 @@ function resize_cluster() {
         if [ -f $OUTPUTDIR/log ] && [[ $(head -1 $OUTPUTDIR/log) == *"Ignoring duplicate sequence"* ]]; then
             echo -e "\n\tThe sequence is hypothetically a simple repeat"
             rm $OUTPUTDIR/seq.fasta.blast.* $OUTPUTDIR/log &> /dev/null
-            cp $FASTAFILE $OUTPUTDIR/simple_repeat.fasta
+            mv $FASTAFILE $OUTPUTDIR/simple_repeat.fasta
             exit 0
         fi
 
@@ -409,7 +409,7 @@ END
 
 ## Main loop
 
-cp $FASTAFILE $OUTPUTDIR/old_consensus.fasta
+mv $FASTAFILE $OUTPUTDIR/old_consensus.fasta
 mv $OUTPUTDIR/cialign_consensus.fasta $OUTPUTDIR/new_consensus.fasta
 
 while true; do
