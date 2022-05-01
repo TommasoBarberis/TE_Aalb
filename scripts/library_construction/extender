@@ -481,6 +481,7 @@ while true; do
 
         echo -e "\n\tThe sequence is extended of $left_flank bp in 5' and of $right_flank in 3'"
 
+        mv $OUTPUTDIR/new_consensus.fasta $OUTPUTDIR/old_consensus.fasta
         mv $OUTPUTDIR/cialign_consensus.fasta $OUTPUTDIR/new_consensus.fasta        
         rm $OUTPUTDIR/seq* $OUTPUTDIR/cialign*  $OUTPUTDIR/coverage.txt &> /dev/null
     fi
