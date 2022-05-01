@@ -54,12 +54,25 @@ if __name__ == '__main__':
         html.Div(id='output_div', children=[])
     ])
 
-    @app.callback(Output('output_div', 'children'),
-        Input('seq-selecter', 'value'))
+    @app.callback(Output('output_div', 'children'), Input('seq-selecter', 'value'))
     def render_content(selected_seq):
+        seq_id = selected_seq.split()[1]
+
+        currentdir = os.getcwd()
+
+        # it is necessary to copy the files outside the app
+        #shutil.copyfile(currentdir + "/seq_" + seq_id + "/test.fasta.c2g.pdf", currentdir + "/assets/img/test.fasta_" + seq_id + ".c2g.pdf")
+        #shutil.copyfile(currentdir + "/seq_" + seq_id + "/new_consensus.fasta.c2g.pdf", currentdir + "/assets/img/new_consensus.fasta_" + seq_id + ".c2g.pdf")
+
         return html.Div(id = 'result_div', children = [
-            html.Iframe(src="/assets/img/seq.fasta.c2g.pdf", id='pdf_viewer_left'),
-            html.Iframe(src="/assets/img/seq.fasta.c2g.pdf", id='pdf_viewer_right'),
+            html.Div(id='pdf_viewer_left', children=[
+                html.H2("Avant", className="h2-pdf-div"),
+                html.Iframe(src="/assets/img/test.fasta_" + seq_id + ".c2g.pdf"),
+            ]),
+            html.Div(id='pdf_viewer_right', children=[
+                html.H2("Après", className="h2-pdf-div"),
+                html.Iframe(src="/assets/img/new_consensus.fasta_" + seq_id + ".c2g.pdf"),
+            ])
         ])
 
     app.run_server(debug=True, port=port)
