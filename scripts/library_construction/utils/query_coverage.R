@@ -15,8 +15,6 @@ cons_coverage=function(blast_file=NULL, cons_len=NULL, out_file=NULL){
     #make the coverage matrix
     coverage = matrix(rep(0, length(blast$V1)*as.numeric(cons_len)), byrow = T, ncol = as.numeric(cons_len))
     for(i in 1:length(blast$V1)){
-        print(cons_len)
-        print(blast$V7[i])
         coverage[i,]<-c(rep(0, blast$V6[i]-1),rep(1, abs(blast$V7[i]-blast$V6[i])+1), rep(0, as.numeric(cons_len)-blast$V7[i]))
     }
     
