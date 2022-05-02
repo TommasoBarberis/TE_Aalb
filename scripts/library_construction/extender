@@ -329,7 +329,7 @@ function resize_cluster() {
         ## Check if sequence is a potential simple repeats
         if [ -f $OUTPUTDIR/log ] && [[ $(head -1 $OUTPUTDIR/log) == *"Ignoring duplicate sequence"* ]]; then
             echo -e "\n\tThe sequence is hypothetically a simple repeat"
-            rm $OUTPUTDIR/seq.fasta.blast.* $OUTPUTDIR/log &> /dev/null
+            rm $OUTPUTDIR/seq.fasta.blast.* $OUTPUTDIR/log $OUTPUTDIR/new_consensus.fasta &> /dev/null
             cp $FASTAFILE $OUTPUTDIR/simple_repeat.fasta
             exit 0
         fi
