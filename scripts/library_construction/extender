@@ -9,7 +9,8 @@
 #   - test for installed dependancies
 #   - add user parameter min coverage
 #   - verify integrity for low coverage sequence (TAG: low_0000)
-#   - add speed/quality tuning option (?)
+#   - upgrade the cleaning of repo
+#   - singularity container
 
 # dependancies:
 # - mafft
@@ -65,7 +66,9 @@ function usage()
                                     subsample is skipped.
     -k, --keep_longest              Keep the k% longest sequences among blast hits (default: 0.25)                                    
     -ins, --max_ins_size            Remove insertion if its size is less than <ins> (default:1000, 
-                                    range:[200-1000]) 
+                                    range:[200-1000])
+    -m, --mode                      Speed mode, fast and less accurate (max 10 iterations) or slow and 
+                                    more accurate (max 100 iterations) (default: fast)                                    
 
     #######################################
 
@@ -76,7 +79,9 @@ function usage()
         - awk
         - bedtools
         - CIAlign
-
+        - python3
+            - Levenshtein
+        - R
 
 
 DOC
@@ -101,6 +106,7 @@ LIMIT=100
 KEEP=0.25
 INS_MAX_SIZE=1000
 MIN_COVERAGE=1
+MODE="fast"
 
 # parse of parameteres
 ARGS=""
@@ -177,6 +183,15 @@ while [[ $# -gt 0 ]]; do
             if (( $(echo "$INS_MAX_SIZE > 1000" |bc -l) )) || (( $(echo "$INS_MAX_SIZE < 200" |bc -l) )); then
                 usage
                 echo "  ERROR! Invalid value for the pourcentage of longest hits to keep." 
+                exit 1
+            fi
+            shift 2
+            ;;
+        -m|--mode)
+            MODE=$2
+            if [ ! $MODE = "fast" ] || [ ! $MODE = "slow"]; then
+                usage
+                echo "  ERROR! Invalid value for the mode parameter"
                 exit 1
             fi
             shift 2
@@ -405,6 +420,7 @@ END
 }
 
 
+
 #####################################################
 
 ## Main loop
@@ -412,7 +428,23 @@ END
 cp $FASTAFILE $OUTPUTDIR/old_consensus.fasta
 mv $OUTPUTDIR/cialign_consensus.fasta $OUTPUTDIR/new_consensus.fasta
 
+counter=0
+
 while true; do
+    
+    if [ $MODE = "fast" ]; then
+        if [ $counter = 10 ]; then
+            echo -e '\tThe maximum number of iterations (10) for the "fast" mode is reached'
+            rm $OUTPUTDIR/old_consensus.fasta &> /dev/null
+            break
+        fi
+    elif [ $MODE = "slow" ]; then
+        if [ $counter = 100 ]; then
+            echo -e '\tThe maximum number of iterations (100) for the "slow" mode is reached'
+            rm $OUTPUTDIR/old_consensus.fasta &> /dev/null
+            break
+        fi
+    fi
     
     ## compute distance between two consensi
     dist=$(levenshtein_distance $OUTPUTDIR/old_consensus.fasta $OUTPUTDIR/new_consensus.fasta >&1)
@@ -432,8 +464,8 @@ while true; do
 
     if (( $(echo "$dist < 0.3" |bc -l) )) && [ $excess_5 -lt 20 ] && [ $excess_3 -lt 20 ]; then
         # consensi are pretty similar
-        rm $OUTPUTDIR/old_consensus.fasta &> /dev/null
-        break
+            rm $OUTPUTDIR/old_consensus.fasta &> /dev/null
+            break
     else
         mv $OUTPUTDIR/new_consensus.fasta $OUTPUTDIR/old_consensus.fasta
         rm $OUTPUTDIR/seq* $OUTPUTDIR/cialign* &> /dev/null
@@ -486,6 +518,7 @@ while true; do
         rm $OUTPUTDIR/seq* $OUTPUTDIR/cialign*  $OUTPUTDIR/coverage.txt &> /dev/null
     fi
 
+    counter=$(($counter+1))
 done
 
 rm $OUTPUTDIR/coverage.txt $OUTPUTDIR/seq.fasta.* &> /dev/null
