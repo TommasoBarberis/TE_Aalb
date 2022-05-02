@@ -428,24 +428,10 @@ END
 cp $FASTAFILE $OUTPUTDIR/old_consensus.fasta
 mv $OUTPUTDIR/cialign_consensus.fasta $OUTPUTDIR/new_consensus.fasta
 
-counter=0
+counter=1
 
 while true; do
-    
-    if [ $MODE = "fast" ]; then
-        if [ $counter = 10 ]; then
-            echo -e '\tThe maximum number of iterations (10) for the "fast" mode is reached'
-            rm $OUTPUTDIR/old_consensus.fasta &> /dev/null
-            break
-        fi
-    elif [ $MODE = "slow" ]; then
-        if [ $counter = 100 ]; then
-            echo -e '\tThe maximum number of iterations (100) for the "slow" mode is reached'
-            rm $OUTPUTDIR/old_consensus.fasta &> /dev/null
-            break
-        fi
-    fi
-    
+     
     ## compute distance between two consensi
     dist=$(levenshtein_distance $OUTPUTDIR/old_consensus.fasta $OUTPUTDIR/new_consensus.fasta >&1)
 
@@ -461,6 +447,20 @@ while true; do
 
     excess_5=$(end_excess $OUTPUTDIR/coverage.txt True $MIN_COVERAGE >&1)
     excess_3=$(end_excess $OUTPUTDIR/coverage.txt False $MIN_COVERAGE >&1)
+
+    if [ $MODE = "fast" ]; then
+        if [ $counter -gt 10 ]; then
+            echo -e '\tThe maximum number of iterations (10) for the "fast" mode is reached, a new consensus is not generated'
+            rm $OUTPUTDIR/old_consensus.fasta $OUTPUTDIR/new_consensus.fasta &> /dev/null
+            break
+        fi
+    elif [ $MODE = "slow" ]; then
+        if [ $counter -gt 100 ]; then
+            echo -e '\tThe maximum number of iterations (100) for the "slow" mode is reached, a new consensus is not generated'
+            rm $OUTPUTDIR/old_consensus.fasta $OUTPUTDIR/new_consensus.fasta &> /dev/null
+            break
+        fi
+    fi
 
     if (( $(echo "$dist < 0.3" |bc -l) )) && [ $excess_5 -lt 20 ] && [ $excess_3 -lt 20 ]; then
         # consensi are pretty similar
