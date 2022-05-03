@@ -302,7 +302,6 @@ get_blast_hit $prefix $FASTAFILE $GENOME $EVALUE $MIN_LENGTH $FLANK $FLANK
 
 if [ $(grep -c ">" $prefix.blast.bed.fa) -lt 3 ]; then
     echo -e "\n\tNot enough blast hit to extend/trim the consensus"
-    cp $FASTAFILE $OUTPUTDIR/new_consensus.fasta
     rm $OUTPUTDIR/seq.fasta.blast.* &> /dev/null
     exit 0
 fi
