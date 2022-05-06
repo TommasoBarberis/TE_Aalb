@@ -90,9 +90,6 @@ def main(fasta_file, genome, ncpu):
         
         c += 1
 
-        if c == 5:
-            break
-
     pool.close()    
     pool.join()
 
