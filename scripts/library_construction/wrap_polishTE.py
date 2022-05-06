@@ -104,7 +104,7 @@ def main(fasta_file, genome, ncpu):
         for line in data:
             fields = line.split()
             if fields[0] == "extend":
-                extend_percent_lst.append(float(ields[1]))
+                extend_percent_lst.append(float(fields[1]))
             elif fields[0] == "trim":
                 trim_percent_lst.append(float(fields[1]))
 
