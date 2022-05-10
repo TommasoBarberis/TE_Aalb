@@ -189,7 +189,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         -m|--mode)
             MODE=$2
-            if [ ! $MODE = "fast" ] || [ ! $MODE = "slow"]; then
+            if [ ! $MODE = "fast" ] && [ ! $MODE = "slow"]; then
                 usage
                 echo "  ERROR! Invalid value for the mode parameter"
                 exit 1
