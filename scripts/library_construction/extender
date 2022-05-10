@@ -68,7 +68,8 @@ function usage()
     -ins, --max_ins_size            Remove insertion if its size is less than <ins> (default:1000, 
                                     range:[200-1000])
     -m, --mode                      Speed mode, fast and less accurate (max 10 iterations) or slow and 
-                                    more accurate (max 100 iterations) (default: fast)                                    
+                                    more accurate (max 100 iterations) (default: fast)
+    -c, --min_cov                   Minimum coverage on boundaries to perform the extension (default: 3)
 
     #######################################
 
@@ -105,7 +106,7 @@ EVALUE=1e-20
 LIMIT=100
 KEEP=0.25
 INS_MAX_SIZE=1000
-MIN_COVERAGE=1
+MIN_COVERAGE=3
 MODE="fast"
 
 # parse of parameteres
@@ -182,7 +183,7 @@ while [[ $# -gt 0 ]]; do
             INS_MAX_SIZE=$2
             if (( $(echo "$INS_MAX_SIZE > 1000" |bc -l) )) || (( $(echo "$INS_MAX_SIZE < 200" |bc -l) )); then
                 usage
-                echo "  ERROR! Invalid value for the pourcentage of longest hits to keep." 
+                echo "  ERROR! Invalid value for the maximum insertion size." 
                 exit 1
             fi
             shift 2
@@ -192,6 +193,15 @@ while [[ $# -gt 0 ]]; do
             if [ ! $MODE = "fast" ] && [ ! $MODE = "slow"]; then
                 usage
                 echo "  ERROR! Invalid value for the mode parameter"
+                exit 1
+            fi
+            shift 2
+            ;;
+        -c|--min_cov)
+            MIN_COVERAGE=$2
+            if ! [[ $MIN_COVERAGE =~ $re ]] ; then
+                usage
+                echo "  ERROR! Invalid value for the minimum coverage on the boundaries." 
                 exit 1
             fi
             shift 2
