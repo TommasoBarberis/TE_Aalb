@@ -59,7 +59,7 @@ function usage()
                                     will use the half of the length of the TE as minimum length, else
                                     it will use the provided value
     -f, --flank                     Number of bases to extract at the flanking regions of the hits 
-                                    (default: 1000)       
+                                    (default: 100)       
     -e, --evalue                    e-value for blastn (default: 1e-20)
     -l, --limit                     Maximum number of hits to take in account for the alignement 
                                     (default: 100). If the number of hits is less then this limit, the
@@ -101,12 +101,12 @@ fi
 THREADS=1
 OUTPUTDIR=./
 MIN_LENGTH=0
-FLANK=1000
+FLANK=100
 EVALUE=1e-20
 LIMIT=100
 KEEP=0.25
 INS_MAX_SIZE=1000
-MIN_COVERAGE=3
+MIN_COVERAGE=1
 MODE="fast"
 
 # parse of parameteres
@@ -270,20 +270,19 @@ if [ $MIN_LENGTH == 0 ]; then
 	MIN_LENGTH=`grep -v ">" $FASTAFILE | wc | awk '{print $3/2}'`
 fi
 
-echo -e "\n\n"
-echo -e "Query sequence:\t" `basename $FASTAFILE`
-echo -e "Minimum length of blast hit:\t" $MIN_LENGTH
-echo -e "the hit locus will be extended:\t" = $FLANK "bases in each direction"
-echo -e "\n\n"
 
+function get_blast_hit() {
 
-function get_blast_hit()
-{
+    echo -e "\n\n"
+    echo -e "Query sequence:\t" `basename $2`
+    echo -e "Minimum length of blast hit:\t" $5
+    echo -e "the hit locus will be extended:\t $6bp in 5' and $7bp in 3'"
+    echo -e "\n\n"
 
     # run blast
     echo "#qseqid sseqid pident length mismatch qstart qend sstart send sstrand" > $1.blast.o
     blastn -query $2 -db $3 -outfmt "6 qseqid sseqid pident length mismatch qstart qend sstart send sstrand" -evalue $4 | awk -v "ml=$5" '{OFS="\t"; if ($4 > ml) {print $0}}' >> $1.blast.o
-
+    
     # parse blast result into a bed file
     awk '{OFS="\t"; if ($1~/^#/) {} else { if ($10~/plus/) {print $2, $8, $9, $1, $3, "+"} else {print $2, $9, $8, $1, $3, "-"}}}' < $1.blast.o > $1.blast.bed
 
@@ -304,6 +303,8 @@ function get_blast_hit()
 }
 
 get_blast_hit $prefix $FASTAFILE $GENOME $EVALUE $MIN_LENGTH $FLANK $FLANK
+cons_len=$(awk 'BEGIN {OFS = "\n"}; /^>/ {print(substr(sequence_id, 2)" "sequence_length); sequence_length = 0; sequence_id = $0}; /^[^>]/ {sequence_length += length($0)}; END {print(substr(sequence_id, 2)" "sequence_length)}' $FASTAFILE | awk 'NR > 1 {print $NF}')
+fl=$(Rscript $scriptdir/utils/query_coverage.R $prefix.blast.o $cons_len $OUTPUTDIR/coverage.txt)
 
 
 #####################################################
@@ -448,7 +449,16 @@ while true; do
     blastn -query $OUTPUTDIR/new_consensus.fasta -db $GENOME -outfmt "6 qseqid sseqid pident length mismatch qstart qend sstart send sstrand" -evalue $EVALUE | awk -v "ml=$MIN_LENGTH" '{OFS="\t"; if ($4 > ml) {print $0}}' >> $prefix.new.blast.o
     new_cons_len=$(awk 'BEGIN {OFS = "\n"}; /^>/ {print(substr(sequence_id, 2)" "sequence_length); sequence_length = 0; sequence_id = $0}; /^[^>]/ {sequence_length += length($0)}; END {print(substr(sequence_id, 2)" "sequence_length)}' $OUTPUTDIR/new_consensus.fasta | awk 'NR > 1 {print $NF}')
     rm $OUTPUTDIR/coverage.txt &> /dev/null
-    Rscript $scriptdir/utils/query_coverage.R $prefix.new.blast.o $new_cons_len $OUTPUTDIR/coverage.txt
+    new_fl=$(Rscript $scriptdir/utils/query_coverage.R $prefix.new.blast.o $new_cons_len $OUTPUTDIR/coverage.txt)
+    
+    if [ $new_fl -ge $fl ]; then
+        fl=$new_fl
+        big_flank=true
+    else
+        big_flank=false
+        # echo -e "\n\nNo new full copies are founded."
+        # break
+    fi
 
     ## count number of 0 at the begin et at the end
     excess_5=0
@@ -473,8 +483,8 @@ while true; do
 
     if (( $(echo "$dist < 0.3" |bc -l) )) && [ $excess_5 -lt 20 ] && [ $excess_3 -lt 20 ]; then
         # consensi are pretty similar
-            rm $OUTPUTDIR/old_consensus.fasta &> /dev/null
-            break
+        rm $OUTPUTDIR/old_consensus.fasta &> /dev/null
+        break
     else
         mv $OUTPUTDIR/new_consensus.fasta $OUTPUTDIR/old_consensus.fasta
         rm $OUTPUTDIR/seq* $OUTPUTDIR/cialign* &> /dev/null
@@ -509,10 +519,18 @@ while true; do
         right_flank=0
 
         if [ $excess_5 -eq 0 ]; then
-            left_flank=500
+            if $big_flank; then
+                left_flank=500
+            else
+                left_flank=100
+            fi
         fi
-        if [ $excess_3 -ne 0 ]; then
-            right_flank=500
+        if [ $excess_3 -eq 0 ]; then
+            if $big_flank; then
+                right_flank=500
+            else
+                right_flank=100
+            fi
         fi
 
         get_blast_hit $prefix $OUTPUTDIR/new_consensus.fasta $GENOME $EVALUE $MIN_LENGTH $left_flank $right_flank
