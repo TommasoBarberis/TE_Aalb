@@ -65,7 +65,7 @@ function usage()
                                     (default: 100). If the number of hits is less then this limit, the
                                     subsample is skipped.
     -k, --keep_longest              Keep the k% longest sequences among blast hits (default: 0.25)                                    
-    -ins, --max_ins_size            Remove insertion if its size is less than <ins> (default:1000, 
+    -ins, --max_ins_size            Remove insertion if its size is less than <ins> (default:200, 
                                     range:[200-1000])
     -m, --mode                      Speed mode, fast and less accurate (max 10 iterations) or slow and 
                                     more accurate (max 100 iterations) (default: fast)
@@ -101,13 +101,14 @@ fi
 THREADS=1
 OUTPUTDIR=./
 MIN_LENGTH=0
-FLANK=100
+FLANK=1000
 EVALUE=1e-20
 LIMIT=100
 KEEP=0.25
-INS_MAX_SIZE=1000
-MIN_COVERAGE=1
+INS_MAX_SIZE=200
+MIN_COVERAGE=2
 MODE="fast"
+FACTOR=1
 
 # parse of parameteres
 ARGS=""
@@ -301,9 +302,12 @@ function get_blast_hit() {
     rm $1.blast.bed $1.blast.flank.bed
 
 }
-
-get_blast_hit $prefix $FASTAFILE $GENOME $EVALUE $MIN_LENGTH $FLANK $FLANK
 cons_len=$(awk 'BEGIN {OFS = "\n"}; /^>/ {print(substr(sequence_id, 2)" "sequence_length); sequence_length = 0; sequence_id = $0}; /^[^>]/ {sequence_length += length($0)}; END {print(substr(sequence_id, 2)" "sequence_length)}' $FASTAFILE | awk 'NR > 1 {print $NF}')
+if [ $cons_len -lt $FLANK ]; then
+    FACTOR=10
+fi
+FLANK=$(( $FLANK/$FACTOR ))
+get_blast_hit $prefix $FASTAFILE $GENOME $EVALUE $MIN_LENGTH $FLANK $FLANK
 fl=$(Rscript $scriptdir/utils/query_coverage.R $prefix.blast.o $cons_len $OUTPUTDIR/coverage.txt)
 
 
@@ -456,8 +460,6 @@ while true; do
         big_flank=true
     else
         big_flank=false
-        # echo -e "\n\nNo new full copies are founded."
-        # break
     fi
 
     ## count number of 0 at the begin et at the end
@@ -481,7 +483,7 @@ while true; do
         fi
     fi
 
-    if (( $(echo "$dist < 0.3" |bc -l) )) && [ $excess_5 -lt 20 ] && [ $excess_3 -lt 20 ]; then
+    if (( $(echo "$dist < 0.3" |bc -l) )) && [ $excess_5 -lt 10 ] && [ $excess_3 -lt 10 ]; then
         # consensi are pretty similar
         rm $OUTPUTDIR/old_consensus.fasta &> /dev/null
         break
@@ -520,16 +522,16 @@ while true; do
 
         if [ $excess_5 -eq 0 ]; then
             if $big_flank; then
-                left_flank=500
+                left_flank=1500
             else
-                left_flank=100
+                left_flank=750
             fi
         fi
         if [ $excess_3 -eq 0 ]; then
             if $big_flank; then
-                right_flank=500
+                right_flank=1500
             else
-                right_flank=100
+                right_flank=750
             fi
         fi
 
@@ -548,4 +550,4 @@ while true; do
     counter=$(($counter+1))
 done
 
-rm $OUTPUTDIR/coverage.txt $OUTPUTDIR/seq.fasta.* &> /dev/null
+rm $OUTPUTDIR/coverage.txt $OUTPUTDIR/seq.fasta.* $prefix.blast* $prefix.new* &> /dev/null
