@@ -1,6 +1,7 @@
 name: TE_Aalb
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - scipy
   - pandas
