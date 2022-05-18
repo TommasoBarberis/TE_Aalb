@@ -1,25 +1,26 @@
 name: TE_Aalb
 channels:
-  - defaults
   - conda-forge
+  - bioconda
+  - r
+  - defaults
 dependencies:
-  - scipy
+  - jupyterlab
   - pandas
-  - tqdm
-  - ipywidgets[version='>=7.6']
-  - bamnostic
   - biopython
   - plotly
+  - scipy
+  - ipywidgets[version='>=7.6']
+  - bamnostic
+  - tqdm
   - python-kaleido
-  - jupyterlab
-  - curl
-  - r-base
-  - readline
-  - natsort
-  - jupyter-dash
   - python-levenshtein
-  - dash-html-components
-  - jupyterlab-dash
   - dash
   - dash-core-components
-prefix: /beegfs/home/tbarberis/.conda/envs/TE_Aalb
+  - dash-html-components
+  - jupyterlab-dash
+  - jupyter-dash
+  - natsort
+  - pfam_scan
+  - matplotlib
+prefix: /home/lerat/anaconda3/envs/TE_Aalb
