@@ -21,4 +21,6 @@ dependencies:
   - jupyterlab-dash
   - jupyter-dash
   - natsort
+  - pfam_scan
+  - matplotlib
 prefix: /home/lerat/anaconda3/envs/TE_Aalb

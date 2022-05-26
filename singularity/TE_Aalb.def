@@ -3,21 +3,39 @@ OSVersion: focal
 MirrorURL:  http://us.archive.ubuntu.com/ubuntu/
 Stage: build
 
-%environment
 
 %post
+    # basic dependancies
     apt-get update && apt-get install -y \
     default-jre \
     default-jdk \
     wget
 
+    # installing miniconda
+    cd /opt
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    chmod +x Miniconda3-latest-Linux-x86_64.sh
+    bash Miniconda3-latest-Linux-x86_64.sh -b -p miniconda/ && rm Miniconda3-latest-Linux-x86_64.sh
+    eval "$(/opt/miniconda/bin/conda shell.bash hook)"
+    miniconda/bin/conda init bash
+
+    # installing pfam_scan
+    /opt/miniconda/bin/conda create -n pfam -c bioconda pfam_scan -y
+
+    # installing popte2
     cd /opt
     wget https://sourceforge.net/projects/popoolation-te2/files/latest/download
     mv download popte2.jar
-    
+
+
+%environment
+    export PATH="/opt/miniconda/bin:${PATH}"
+
     
 %help
-This container is used to perform TE (transposable elements) insertion calling
-in the Aedes albopictus's 1000 genomes project.
-To process a sequenced genome run:
-TODO
+This container is used transposable elements analysis in Aedes albopictus.
+    - protein domains search
+        > . /opt/miniconda/etc/profile.d/conda.sh
+        > conda activate pfam
+        > pfam_scan.pl -fasta out.orf -dir pfam_db_dir_location -outfile out.orf.pf
+    - TE insertion calling for the 1000 genomes project.

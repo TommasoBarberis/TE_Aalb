@@ -3,7 +3,7 @@ from Bio import SeqIO
 import plotly.express as px
 import plotly.graph_objects as go
 from collections import Counter
-import pysam
+# import pysam
 import pandas as pd
 import statistics
 from glob import glob

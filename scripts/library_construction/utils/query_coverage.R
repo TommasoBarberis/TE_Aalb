@@ -23,6 +23,10 @@ cons_coverage=function(blast_file=NULL, cons_len=NULL, out_file=NULL){
     rownames(coverage) <- new_rownames
     coverage<-colSums(coverage)
     write.table(coverage, file=out_file, col.names=F, row.names=F)
+
+    # number of full copies
+    full=blast[abs(blast$V6-blast$V7) >= 0.9*as.numeric(cons_len),]
+    cat(nrow(full))    
 }
 
 cons_coverage(blast_file = blast_file,

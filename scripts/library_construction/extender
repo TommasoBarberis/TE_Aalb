@@ -9,7 +9,8 @@
 #   - test for installed dependancies
 #   - add user parameter min coverage
 #   - verify integrity for low coverage sequence (TAG: low_0000)
-#   - add speed/quality tuning option (?)
+#   - upgrade the cleaning of repo
+#   - singularity container
 
 # dependancies:
 # - mafft
@@ -58,14 +59,17 @@ function usage()
                                     will use the half of the length of the TE as minimum length, else
                                     it will use the provided value
     -f, --flank                     Number of bases to extract at the flanking regions of the hits 
-                                    (default: 1000)       
+                                    (default: 100)       
     -e, --evalue                    e-value for blastn (default: 1e-20)
     -l, --limit                     Maximum number of hits to take in account for the alignement 
                                     (default: 100). If the number of hits is less then this limit, the
                                     subsample is skipped.
     -k, --keep_longest              Keep the k% longest sequences among blast hits (default: 0.25)                                    
-    -ins, --max_ins_size            Remove insertion if its size is less than <ins> (default:1000, 
-                                    range:[200-1000]) 
+    -ins, --max_ins_size            Remove insertion if its size is less than <ins> (default:200, 
+                                    range:[200-1000])
+    -m, --mode                      Speed mode, fast and less accurate (max 10 iterations) or slow and 
+                                    more accurate (max 100 iterations) (default: fast)
+    -c, --min_cov                   Minimum coverage on boundaries to perform the extension (default: 3)
 
     #######################################
 
@@ -76,7 +80,9 @@ function usage()
         - awk
         - bedtools
         - CIAlign
-
+        - python3
+            - Levenshtein
+        - R
 
 
 DOC
@@ -99,8 +105,10 @@ FLANK=1000
 EVALUE=1e-20
 LIMIT=100
 KEEP=0.25
-INS_MAX_SIZE=1000
-MIN_COVERAGE=1
+INS_MAX_SIZE=200
+MIN_COVERAGE=2
+MODE="fast"
+FACTOR=1
 
 # parse of parameteres
 ARGS=""
@@ -176,7 +184,25 @@ while [[ $# -gt 0 ]]; do
             INS_MAX_SIZE=$2
             if (( $(echo "$INS_MAX_SIZE > 1000" |bc -l) )) || (( $(echo "$INS_MAX_SIZE < 200" |bc -l) )); then
                 usage
-                echo "  ERROR! Invalid value for the pourcentage of longest hits to keep." 
+                echo "  ERROR! Invalid value for the maximum insertion size." 
+                exit 1
+            fi
+            shift 2
+            ;;
+        -m|--mode)
+            MODE=$2
+            if [ ! $MODE = "fast" ] && [ ! $MODE = "slow"]; then
+                usage
+                echo "  ERROR! Invalid value for the mode parameter"
+                exit 1
+            fi
+            shift 2
+            ;;
+        -c|--min_cov)
+            MIN_COVERAGE=$2
+            if ! [[ $MIN_COVERAGE =~ $re ]] ; then
+                usage
+                echo "  ERROR! Invalid value for the minimum coverage on the boundaries." 
                 exit 1
             fi
             shift 2
@@ -245,20 +271,19 @@ if [ $MIN_LENGTH == 0 ]; then
 	MIN_LENGTH=`grep -v ">" $FASTAFILE | wc | awk '{print $3/2}'`
 fi
 
-echo -e "\n\n"
-echo -e "Query sequence:\t" `basename $FASTAFILE`
-echo -e "Minimum length of blast hit:\t" $MIN_LENGTH
-echo -e "the hit locus will be extended:\t" = $FLANK "bases in each direction"
-echo -e "\n\n"
 
+function get_blast_hit() {
 
-function get_blast_hit()
-{
+    echo -e "\n\n"
+    echo -e "Query sequence:\t" `basename $2`
+    echo -e "Minimum length of blast hit:\t" $5
+    echo -e "the hit locus will be extended:\t $6bp in 5' and $7bp in 3'"
+    echo -e "\n\n"
 
     # run blast
     echo "#qseqid sseqid pident length mismatch qstart qend sstart send sstrand" > $1.blast.o
     blastn -query $2 -db $3 -outfmt "6 qseqid sseqid pident length mismatch qstart qend sstart send sstrand" -evalue $4 | awk -v "ml=$5" '{OFS="\t"; if ($4 > ml) {print $0}}' >> $1.blast.o
-
+    
     # parse blast result into a bed file
     awk '{OFS="\t"; if ($1~/^#/) {} else { if ($10~/plus/) {print $2, $8, $9, $1, $3, "+"} else {print $2, $9, $8, $1, $3, "-"}}}' < $1.blast.o > $1.blast.bed
 
@@ -277,8 +302,13 @@ function get_blast_hit()
     rm $1.blast.bed $1.blast.flank.bed
 
 }
-
+cons_len=$(awk 'BEGIN {OFS = "\n"}; /^>/ {print(substr(sequence_id, 2)" "sequence_length); sequence_length = 0; sequence_id = $0}; /^[^>]/ {sequence_length += length($0)}; END {print(substr(sequence_id, 2)" "sequence_length)}' $FASTAFILE | awk 'NR > 1 {print $NF}')
+if [ $cons_len -lt $FLANK ]; then
+    FACTOR=10
+fi
+FLANK=$(( $FLANK/$FACTOR ))
 get_blast_hit $prefix $FASTAFILE $GENOME $EVALUE $MIN_LENGTH $FLANK $FLANK
+fl=$(Rscript $scriptdir/utils/query_coverage.R $prefix.blast.o $cons_len $OUTPUTDIR/coverage.txt)
 
 
 #####################################################
@@ -287,7 +317,6 @@ get_blast_hit $prefix $FASTAFILE $GENOME $EVALUE $MIN_LENGTH $FLANK $FLANK
 
 if [ $(grep -c ">" $prefix.blast.bed.fa) -lt 3 ]; then
     echo -e "\n\tNot enough blast hit to extend/trim the consensus"
-    cp $FASTAFILE $OUTPUTDIR/new_consensus.fasta
     rm $OUTPUTDIR/seq.fasta.blast.* &> /dev/null
     exit 0
 fi
@@ -314,7 +343,7 @@ function resize_cluster() {
         ## Check if sequence is a potential simple repeats
         if [ -f $OUTPUTDIR/log ] && [[ $(head -1 $OUTPUTDIR/log) == *"Ignoring duplicate sequence"* ]]; then
             echo -e "\n\tThe sequence is hypothetically a simple repeat"
-            rm $OUTPUTDIR/seq.fasta.blast.* $OUTPUTDIR/log &> /dev/null
+            rm $OUTPUTDIR/seq.fasta.blast.* $OUTPUTDIR/log $OUTPUTDIR/new_consensus.fasta &> /dev/null
             cp $FASTAFILE $OUTPUTDIR/simple_repeat.fasta
             exit 0
         fi
@@ -405,6 +434,7 @@ END
 }
 
 
+
 #####################################################
 
 ## Main loop
@@ -412,8 +442,10 @@ END
 cp $FASTAFILE $OUTPUTDIR/old_consensus.fasta
 mv $OUTPUTDIR/cialign_consensus.fasta $OUTPUTDIR/new_consensus.fasta
 
+counter=1
+
 while true; do
-    
+     
     ## compute distance between two consensi
     dist=$(levenshtein_distance $OUTPUTDIR/old_consensus.fasta $OUTPUTDIR/new_consensus.fasta >&1)
 
@@ -421,7 +453,14 @@ while true; do
     blastn -query $OUTPUTDIR/new_consensus.fasta -db $GENOME -outfmt "6 qseqid sseqid pident length mismatch qstart qend sstart send sstrand" -evalue $EVALUE | awk -v "ml=$MIN_LENGTH" '{OFS="\t"; if ($4 > ml) {print $0}}' >> $prefix.new.blast.o
     new_cons_len=$(awk 'BEGIN {OFS = "\n"}; /^>/ {print(substr(sequence_id, 2)" "sequence_length); sequence_length = 0; sequence_id = $0}; /^[^>]/ {sequence_length += length($0)}; END {print(substr(sequence_id, 2)" "sequence_length)}' $OUTPUTDIR/new_consensus.fasta | awk 'NR > 1 {print $NF}')
     rm $OUTPUTDIR/coverage.txt &> /dev/null
-    Rscript $scriptdir/utils/query_coverage.R $prefix.new.blast.o $new_cons_len $OUTPUTDIR/coverage.txt
+    new_fl=$(Rscript $scriptdir/utils/query_coverage.R $prefix.new.blast.o $new_cons_len $OUTPUTDIR/coverage.txt)
+    
+    if [ $new_fl -ge $fl ]; then
+        fl=$new_fl
+        big_flank=true
+    else
+        big_flank=false
+    fi
 
     ## count number of 0 at the begin et at the end
     excess_5=0
@@ -430,7 +469,21 @@ while true; do
     excess_5=$(end_excess $OUTPUTDIR/coverage.txt True $MIN_COVERAGE >&1)
     excess_3=$(end_excess $OUTPUTDIR/coverage.txt False $MIN_COVERAGE >&1)
 
-    if (( $(echo "$dist < 0.3" |bc -l) )) && [ $excess_5 -lt 20 ] && [ $excess_3 -lt 20 ]; then
+    if [ $MODE = "fast" ]; then
+        if [ $counter -gt 10 ]; then
+            echo -e '\tThe maximum number of iterations (10) for the "fast" mode is reached, a new consensus is not generated'
+            rm $OUTPUTDIR/old_consensus.fasta $OUTPUTDIR/new_consensus.fasta &> /dev/null
+            break
+        fi
+    elif [ $MODE = "slow" ]; then
+        if [ $counter -gt 100 ]; then
+            echo -e '\tThe maximum number of iterations (100) for the "slow" mode is reached, a new consensus is not generated'
+            rm $OUTPUTDIR/old_consensus.fasta $OUTPUTDIR/new_consensus.fasta &> /dev/null
+            break
+        fi
+    fi
+
+    if (( $(echo "$dist < 0.3" |bc -l) )) && [ $excess_5 -lt 10 ] && [ $excess_3 -lt 10 ]; then
         # consensi are pretty similar
         rm $OUTPUTDIR/old_consensus.fasta &> /dev/null
         break
@@ -468,10 +521,18 @@ while true; do
         right_flank=0
 
         if [ $excess_5 -eq 0 ]; then
-            left_flank=500
+            if $big_flank; then
+                left_flank=1500
+            else
+                left_flank=750
+            fi
         fi
-        if [ $excess_3 -ne 0 ]; then
-            right_flank=500
+        if [ $excess_3 -eq 0 ]; then
+            if $big_flank; then
+                right_flank=1500
+            else
+                right_flank=750
+            fi
         fi
 
         get_blast_hit $prefix $OUTPUTDIR/new_consensus.fasta $GENOME $EVALUE $MIN_LENGTH $left_flank $right_flank
@@ -486,6 +547,7 @@ while true; do
         rm $OUTPUTDIR/seq* $OUTPUTDIR/cialign*  $OUTPUTDIR/coverage.txt &> /dev/null
     fi
 
+    counter=$(($counter+1))
 done
 
-rm $OUTPUTDIR/coverage.txt $OUTPUTDIR/seq.fasta.* &> /dev/null
+rm $OUTPUTDIR/coverage.txt $OUTPUTDIR/seq.fasta.* $prefix.blast* $prefix.new* &> /dev/null
