@@ -1,0 +1,45 @@
+Manual curation of top 20 repeated consensi using `TE-Aid`.
+
+Top 20 most repeated:
+ - seq_10227: LINE (?)
+ - seq_12332: Unknown
+ - seq_13167: SAT
+ - seq_13507: SAT
+ - seq_14442: LINE (?)
+ - seq_14554: Unknown (false positive?)
+ - seq_163: SAT
+ - seq_16526: SAT
+ - seq_16927: Unknown
+ - seq_18318: SAT
+ - seq_20039: SAT
+ - seq_20967: low copy
+ - seq_2115: SAT
+ - seq_21719: SAT
+ - seq_22119: TIR nested in small LTR (?)
+ - seq_22402: SAT or TART
+ - seq_5143: SAT
+ - seq_7151: low copy
+ - seq_8040: SAT
+ - seq_9439: SAT
+
+ Top 20 most masking genome:
+- seq_10227: LINE (?)
+- seq_10966: SAT
+- seq_12332: Unknown
+- seq_13507: SAT
+- seq_14442: LINE (?)
+- seq_15882: SAT
+- seq_163: SAT
+- seq_16526: SAT
+- seq_16927: Unknown
+- seq_17220: SAT
+- seq_18318: SAT
+- seq_21325: SAT
+- seq_21719: SAT
+- seq_3306: SAT
+- seq_5143: SAT
+- seq_6933: SAT
+- seq_7239: SAT
+- seq_8040: SAT
+- seq_9439: SAT
+- seq_9710: SAT
