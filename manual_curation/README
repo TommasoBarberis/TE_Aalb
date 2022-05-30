@@ -1,6 +1,6 @@
-Manual curation of top 20 repeated consensi using `TE-Aid`.
+# Manual curation of top 20 repeated consensi using `TE-Aid`
 
-Top 20 most repeated:
+## Top 20 most repeated
  - seq_10227: LINE (?)
  - seq_12332: Unknown
  - seq_13167: SAT
@@ -22,7 +22,7 @@ Top 20 most repeated:
  - seq_8040: SAT
  - seq_9439: SAT
 
- Top 20 most masking genome:
+ ## Top 20 most masking genome
 - seq_10227: LINE (?)
 - seq_10966: SAT
 - seq_12332: Unknown
@@ -43,3 +43,25 @@ Top 20 most repeated:
 - seq_8040: SAT
 - seq_9439: SAT
 - seq_9710: SAT
+
+## Top 20 DNA
+seq_10593: 
+seq_10608:
+seq_11274:
+seq_15623:
+seq_16885:
+seq_17409:
+seq_20136:
+seq_21196:
+seq_21241:
+seq_3104:
+seq_3163:
+seq_354:
+seq_390:
+seq_3939:
+seq_4558:
+seq_5420:
+seq_7741:
+seq_817:
+seq_819:
+seq_8366:
