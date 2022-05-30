@@ -45,23 +45,89 @@
 - seq_9710: SAT
 
 ## Top 20 DNA
-seq_10593: 
-seq_10608:
-seq_11274:
-seq_15623:
-seq_16885:
-seq_17409:
-seq_20136:
-seq_21196:
-seq_21241:
-seq_3104:
-seq_3163:
-seq_354:
-seq_390:
-seq_3939:
-seq_4558:
-seq_5420:
-seq_7741:
-seq_817:
-seq_819:
-seq_8366:
+- seq_10593: no (added from TIR)
+- seq_10608: no (added from TIR)
+- seq_11274: no (added from TIR)
+- seq_15623: no (added from TIR)
+- seq_16885: no (added from MITE)
+- seq_17409: yes (added from MITE)
+- seq_20136: no (added from TIR)
+- seq_21196: yes, dna
+- seq_21241: ?
+- seq_3104: ? (added from TIR)
+- seq_3163: no (added from TIR)
+- seq_354: no (added from TIR)
+- seq_390: yes (added from MITE), palindrome
+- seq_3939: no (added from TIR)
+- seq_4558: no (added from TIR)
+- seq_5420: no (added from TIR)
+- seq_7741: no (added from TIR)
+- seq_817: yes, dna
+- seq_819: no (added from TIR)
+- seq_8366: no (added from TIR)
+
+### Without putative TIR and MITE
+- seq_11458: maybe a polinton but no polinton/maverick hits
+- seq_14950: :grey_question: 
+- seq_15030: :grey_question:
+- seq_1788: a lot of SSR, hits against other super-families, strong overlapping between fragments
+- seq_20211: :heavy_check_mark: (probably a MITE)
+- seq_20639: over-extension (?)
+- seq_21196: :grey_question:
+- seq_21435: :grey_question:
+- seq_22299: :heavy_check_mark: (TIR) 
+- seq_22525: :grey_question:
+- seq_22677: over-extension (?)
+- seq_2643: :grey_question:
+- seq_3136: hit against a LTR
+- seq_401: :grey_question:
+- seq_5273: :heavy_check_mark: (probably a MITE)
+- seq_7262: :grey_question:
+- seq_8142: LTR and hit against LTR
+- seq_817: over-extension (?)
+- seq_8631: :heavy_check_mark: (probably a MITE)
+- seq_8843: :heavy_check_mark: (probably a MITE)
+
+## Top 20 LINE
+- seq_10565: :heavy_check_mark:
+- seq_10591: :heavy_check_mark:
+- seq_11187: :heavy_check_mark:
+- seq_12129: :heavy_check_mark:
+- seq_13742: :heavy_check_mark:
+- seq_16871: :heavy_check_mark:
+- seq_17877: :heavy_check_mark:
+- seq_18627: :heavy_check_mark:
+- seq_19530: :heavy_check_mark:
+- seq_19968: :heavy_check_mark:
+- seq_22765: :heavy_check_mark:
+- seq_22853: :heavy_check_mark:
+- seq_22859: maybe a LTR
+- seq_22937: :heavy_check_mark:
+- seq_3465: over-extension?
+- seq_4950: :heavy_check_mark:
+- seq_6392: no LINE protein domain, but uncanonical 5' truncation pattern
+- seq_7200: :heavy_check_mark:
+- seq_7783: :heavy_check_mark:
+- seq_9072: :grey_question:
+
+## Top 20 LTR
+- seq_10428: :heavy_check_mark:
+- seq_11180: :grey_question:
+- seq_11509: :heavy_check_mark:, no LTR on the ends
+- seq_12310: no LTR on the ends
+- seq_14295: :grey_question:, small TIRs
+- seq_14519: :grey_question:, small TIRs
+- seq_1572: :heavy_check_mark:
+- seq_15850: :heavy_check_mark:
+- seq_16468: :grey_question:, small TIRs
+- seq_17317: :heavy_check_mark:
+- seq_18010: :grey_question:, small TIRs
+- seq_19440: :heavy_check_mark:
+- seq_19656: no pdf 
+- seq_21643: probably a LINE, over-extension (?)
+- seq_4332: :heavy_check_mark:
+- seq_44: over-extension (?)
+- seq_5083: :heavy_check_mark:
+- seq_5537: :heavy_check_mark:
+- seq_7002: :heavy_check_mark:
+- seq_8453: :heavy_check_mark:
