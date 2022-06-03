@@ -3,3 +3,4 @@
 *.ipynb linguist-detectable=false
 *.html linguist-detectable=false
 *.def linguist-language=Singularity
+*.tex linguist-detectable=true
