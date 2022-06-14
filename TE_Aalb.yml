@@ -23,4 +23,5 @@ dependencies:
   - natsort
   - pfam_scan
   - matplotlib
+  - geopandas
 prefix: /home/lerat/anaconda3/envs/TE_Aalb
