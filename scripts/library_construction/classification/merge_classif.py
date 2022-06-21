@@ -36,8 +36,6 @@ def merge_classif(rm_file, rp_file, rc_file):
             rc_dict[fields[0]] = (classif[0], classif[1])
 
     with open("merged_classif.tsv", "w") as f:
-        f.write("query\trm_sup\trm_inf\trp_sup\trp_inf\trc_sup\trc_inf\n")
-        
         for seq in rc_dict.keys():
             if seq in rm_dict.keys():
                 rm_sup = rm_dict[seq][1]
@@ -84,6 +82,7 @@ def merge_classif(rm_file, rp_file, rc_file):
                     sup = rp_sup
                 elif rc_sup == rm_sup or rc_sup == rp_sup:
                     sup = rc_sup
+
                 
                 if "-" in rm_inf and rm_inf != "-":
                     rm_inf = rm_inf.split("-")[0]
@@ -114,12 +113,9 @@ def merge_classif(rm_file, rp_file, rc_file):
                     if rp_inf.startswith(rc_inf) or rc_inf.startswith(rp_inf):
                         inf = rc_inf
                     
-                        if seq == "seq_24":
-                            print(rm_inf)
-                            print(rc_inf)
-                            print(rp_inf)
-                line = (seq + "\t" + sup + "\t" + inf + "\n")
-                f.write(line)
+                if sup != '-' or inf != '-':
+                    line = (seq + "\t" + sup + "\t" + inf + "\n")
+                    f.write(line)
 
         
 
