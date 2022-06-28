@@ -173,7 +173,7 @@ def call_consensus(cdhit_dict, seqs_dict, out_dir, min_size, ncpu):
                 seqs_id = cdhit_dict[seq_id]
                 seqs_id.append(seq_id) # add representative sequence
                 
-                pool.apply_async(refiner, (cluster_file, seqs_id, seqs_dict, consensi, stk))
+                pool.apply_async(refiner, (cluster_file, seqs_id, seqs_dict, consensi, stk, max_seq))
                     
                 c += 1
 
