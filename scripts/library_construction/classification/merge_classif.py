@@ -21,7 +21,11 @@ def merge_classif(rm_file, rp_file, rc_file):
         data = f.readlines()
         for line in data:
             fields = line.split()
-            rp_dict[fields[0]] = (fields[2], fields[3])
+            if "/" in fields[2]:
+                classif = fields[2].split("/")
+            else:
+                classif = [fields[2], fields[3]]
+            rp_dict[fields[0]] = (classif[0], classif[1])
     
     rc_dict = {}
     with open(rc_file, 'r') as f:
@@ -112,6 +116,16 @@ def merge_classif(rm_file, rp_file, rc_file):
                         inf = rm_inf
                     if rp_inf.startswith(rc_inf) or rc_inf.startswith(rp_inf):
                         inf = rc_inf
+                
+                if sup == '-':
+                    if inf == 'CR1' or inf == 'Dong' or inf == 'I':
+                        sup = "LINE"
+                    elif  inf == 'Helitron':
+                        sup = "DNA"
+                    elif inf == 'Penelope':
+                        sup = "PLE"
+                    elif inf == 'tRNA':
+                        sup = "tRNA"
                     
                 if sup != '-' or inf != '-':
                     line = (seq + "\t" + sup + "\t" + inf + "\n")
